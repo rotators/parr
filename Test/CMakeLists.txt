@@ -4,7 +4,7 @@ enable_testing()
 
 function( add_test_target target extension )
     message( STATUS "Target: ${target}" )
-    file( GLOB_RECURSE found_tests LIST_DIRECTORIES false RELATIVE "${CMAKE_CURRENT_LIST_DIR}" CONFIGURE_DEPENDS "${target}/*.${extension}" )
+    file( GLOB_RECURSE found_tests LIST_DIRECTORIES false FOLLOW_SYMLINKS RELATIVE "${CMAKE_CURRENT_LIST_DIR}" CONFIGURE_DEPENDS "${target}/*.${extension}" )
     list( SORT found_tests )
 
     foreach( file IN LISTS found_tests )
