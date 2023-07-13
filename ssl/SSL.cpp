@@ -64,6 +64,35 @@ namespace parr::action::ssl
         }
     };
 
+    template<>
+    struct on<rule::ssl::procedure::arguments::none>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput& input, Parser::State& )
+        {
+            std::cout << "APPLY procedure::arg::none<" << input.string() << ">" << std::endl;
+        }
+    };
+    template<>
+    struct on<rule::ssl::procedure::scope::begin>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput&, Parser::State& )
+        {
+            std::cout << "APPLY procedure::scope::begin" << std::endl;
+        }
+    };
+
+    template<>
+    struct on<rule::ssl::procedure::scope::end>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput&, Parser::State& )
+        {
+            std::cout << "APPLY procedure::scope::end>" << std::endl;
+        }
+    };
+
 }  // namespace parr::action::ssl
 /*
 namespace parr::action::ssl
