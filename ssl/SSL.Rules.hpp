@@ -29,6 +29,11 @@ namespace parr::rule::ssl
         using declarationLong          = pegtl::seq<String, pegtl::pad<Name, blank>, charSemicolon>;
     }
 
+    struct operators
+    {
+        using increase                 = pegtl::two<'+'>;
+    };
+
     // variables
 
     struct variable
@@ -45,10 +50,14 @@ namespace parr::rule::ssl
             struct localAssign         : pegtl::seq<string, blank, name, blankOpt, assignConstant, blankOpt, charSemicolon>{};
             struct import              : pegtl::seq<stringImport, blank, localEmpty>{}; // imported variables cannot be assigned
 
-            using x                    = pegtl::sor<localEmpty, localAssign, import>;
+            using globalScope          = pegtl::sor<localEmpty, localAssign, import>;
+            using procedureScope       = pegtl::sor<localEmpty, localAssign>;
         };
 
-        struct x                       : pegtl::sor<declaration::x>{};
+        struct increase                : pegtl::seq<pegtl::identifier, blankOpt, operators::increase, blankOpt, charSemicolon>{}; // name++;
+
+        struct globalScope             : declaration::globalScope{};
+        struct procedureScope          : pegtl::sor<declaration::procedureScope, increase>{};
     };
 
 
@@ -68,33 +77,44 @@ namespace parr::rule::ssl
 
         struct declaration
         {
-            //struct empty             : meta::declarationLong<string, name>{}; // pegtl::seq<stringProcedure, blankLong, procedureName, blankLong, charSemicolon> {};
             struct empty               : pegtl::seq<proc, blankOpt, charSemicolon>{};
             struct argEmpty            : pegtl::seq<proc, blankOpt, arg::empty, blankOpt, charSemicolon>{};
 
             struct x                   : pegtl::sor<declaration::empty, declaration::argEmpty>{};
         };
 
-        struct end                    : stringEnd{};
-        struct beginEnd               : pegtl::seq<stringBegin, blank, stringEnd>{};
-
+        // regular procedures
         struct arguments
         {
-            struct none               : pegtl::seq<proc, blank, stringBegin>{};                          // procedure name begin
-            struct empty              : pegtl::seq<proc, blankOpt, arg::empty, blankOpt, stringBegin>{}; // procedure name()begin
+            struct none               : pegtl::seq<proc, pegtl::at<blank, stringBegin>>{};                          // procedure name begin
+            struct empty              : pegtl::seq<proc, blankOpt, arg::empty, pegtl::at<blankOpt, stringBegin>>{}; // procedure name()begin
 
-            struct x                  : pegtl::sor<arguments::none, arguments::empty>{};
+            // avoid including blanks in rules above
+            struct x                  : pegtl::sor<pegtl::seq<arguments::none, blank>, pegtl::seq<arguments::empty, blankOpt>>{};
         };
 
+        // empty procedures doing nothing
+        // matches whole procedures whole body - including "begin" and "end" - scope::begin/end rules are NOT used
         struct nop
         {
-            struct none               : pegtl::seq<arguments::none, blank, stringEnd>{};     // procedure name begin end
-            struct empty              : pegtl::seq<arguments::empty, blankOpt, stringEnd>{}; // procedure name()begin end
+            struct none               : pegtl::seq<arguments::none, stringBegin, blank, stringEnd>{};     // procedure name begin end
+            struct empty              : pegtl::seq<arguments::empty, stringBegin, blankOpt, stringEnd>{}; // procedure name()begin end
 
             struct x                  : pegtl::sor<nop::none,nop::empty>{};
         };
 
-        struct x                      : pegtl::sor<declaration::x, nop::x, arguments::x>{};
+        // used to inform actions that parser entered/left procedure scope
+        // MUST match ONLY ONCE per procedure
+        struct scope
+        {
+            struct begin              : stringBegin{};
+            struct end                : stringEnd{};
+        };
+
+        // matches whole procedure body - including "begin" and "end" - AFTER it's parsed
+        struct body                   : pegtl::seq<scope::begin, pegtl::until<scope::end, pegtl::sor<eol, blank, variable::procedureScope>>>{};
+
+        struct x                      : pegtl::sor<declaration::x, nop::x, pegtl::seq<arguments::x, body>>{};
     };
 
     // lines
@@ -107,7 +127,7 @@ namespace parr::rule::ssl
 
     // r*
     // used as starting point
-    struct rGlobalScope               : pegtl::until<eof, pegtl::sor<eol, blank, procedure::x, variable::x>> {};
+    struct rGlobalScope               : pegtl::until<eof, pegtl::sor<eol, blank, procedure::x, variable::globalScope>> {};
 
     // clang-format on
 }  // namespace parr::rule::ssl

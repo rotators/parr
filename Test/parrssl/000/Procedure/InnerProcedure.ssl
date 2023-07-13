@@ -1,0 +1,6 @@
+procedure outer
+begin
+  procedure inner
+  begin
+  end
+end
