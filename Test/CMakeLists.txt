@@ -13,7 +13,7 @@ function( add_test_target target extension )
         set( name "${name_dir}/${name_wle}" )
         set( filename "${CMAKE_CURRENT_LIST_DIR}/${name}" )
 
-        list( APPEND test_files "${filename}.${extension}" )
+        list( APPEND used_files "${filename}.${extension}" )
 
 #        message( STATUS "Add test... ${name}" )
 #        message( STATUS "- file: ${file}" )
@@ -25,20 +25,20 @@ function( add_test_target target extension )
         if( EXISTS "${filename}.COMMAND_LINE" )
             file( READ "${filename}.COMMAND_LINE" command_line )
 
-            list( APPEND test_files "${filename}.COMMAND_LINE" )
+            list( APPEND used_files "${filename}.COMMAND_LINE" )
 #            message( STATUS "- command line: ${command_line}" )
         else()
             if( EXISTS "${filename}.COMMAND_LINE_BEFORE" )
                 file( READ "${filename}.COMMAND_LINE_BEFORE" command_line_before )
 
-                list( APPEND test_files "${filename}.COMMAND_LINE_AFTER" )
+                list( APPEND used_files "${filename}.COMMAND_LINE_AFTER" )
 #                message( STATUS "- command line (before): ${command_line_after}" )
             endif()
 
             if( EXISTS "${filename}.COMMAND_LINE_AFTER" )
                 file( READ "${filename}.COMMAND_LINE" command_line_after )
 
-                list( APPEND test_files "${filename}.COMMAND_LINE_AFTER" )
+                list( APPEND used_files "${filename}.COMMAND_LINE_AFTER" )
 #                message( STATUS "- command line (after):  ${command_line_after}" )
             endif()
         endif()
@@ -51,7 +51,7 @@ function( add_test_target target extension )
         if( EXISTS "${filename}.WILL_FAIL" )
             set_property( TEST "${name}" PROPERTY WILL_FAIL TRUE )
 
-            list( APPEND test_files "${filename}.WILL_FAIL" )
+            list( APPEND used_files "${filename}.WILL_FAIL" )
 #            message( STATUS "- will fail" )
         endif()
     endforeach()
@@ -65,7 +65,7 @@ function( add_test_target target extension )
     add_custom_target( ${target}-test
         DEPENDS           ${target}
         COMMAND           ${CMAKE_CTEST_COMMAND} --build-config ${TEST_CONFIG} --output-on-failure
-        SOURCES           ${test_files}
+        SOURCES           ${used_files}
     )
 
     source_group( TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${found_tests} )

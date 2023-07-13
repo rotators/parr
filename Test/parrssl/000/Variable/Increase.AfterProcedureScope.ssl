@@ -1,0 +1,6 @@
+variable var;
+procedure name
+begin
+  var++;
+end
+var++;
