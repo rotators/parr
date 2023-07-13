@@ -1,0 +1,2 @@
+// sslc: Can't assign in initialization of imported variables.
+import variable name := 1;

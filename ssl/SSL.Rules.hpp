@@ -17,6 +17,7 @@ namespace parr::rule::ssl
 
     using stringBegin                  = pegtl::string<'b', 'e', 'g', 'i', 'n'>;
     using stringEnd                    = pegtl::string<'e', 'n', 'd'>;
+    using stringImport                 = pegtl::string<'i', 'm', 'p', 'o', 'r', 't'>;
     using stringLiteral                = pegtl::seq<pegtl::one<'"'>, pegtl::star<pegtl::seq<pegtl::not_one<'\\'>, any>>, pegtl::one<'"'>>;
 
     using blank                        = blankWithComment;
@@ -30,11 +31,26 @@ namespace parr::rule::ssl
 
     // variables
 
-    using stringVariable               = pegtl::string<'v', 'a', 'r', 'i', 'a', 'b', 'l', 'e'>;
+    struct variable
+    {
+        using string                   = pegtl::string<'v', 'a', 'r', 'i', 'a', 'b', 'l', 'e'>;
+        using name                     = pegtl::identifier; // TODO support special prefixes
+        using assign                   = pegtl::sor<pegtl::string<':', '='>, pegtl::one<'='>>;
 
-    struct variableName                : pegtl::identifier{};
-    struct variableDeclaration         : meta::declarationLong<stringVariable, variableName>{};
-    struct variable                    : pegtl::sor<variableDeclaration>{}; // TODO
+        struct assignConstant          : pegtl::seq<assign, blankOpt, pegtl::digit>{}; // := 1
+
+        struct declaration
+        {
+            struct localEmpty          : pegtl::seq<string, blank, name, blankOpt, charSemicolon>{};
+            struct localAssign         : pegtl::seq<string, blank, name, blankOpt, assignConstant, blankOpt, charSemicolon>{};
+            struct import              : pegtl::seq<stringImport, blank, localEmpty>{}; // imported variables cannot be assigned
+
+            using x                    = pegtl::sor<localEmpty, localAssign, import>;
+        };
+
+        struct x                       : pegtl::sor<declaration::x>{};
+    };
+
 
     // procedures
 
@@ -91,7 +107,7 @@ namespace parr::rule::ssl
 
     // r*
     // used as starting point
-    struct rGlobalScope               : pegtl::until<eof, pegtl::sor<eol, blank, procedure::x, variable>> {};
+    struct rGlobalScope               : pegtl::until<eof, pegtl::sor<eol, blank, procedure::x, variable::x>> {};
 
     // clang-format on
 }  // namespace parr::rule::ssl
