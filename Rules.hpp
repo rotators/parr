@@ -6,11 +6,11 @@ namespace parr::rule
 {
     namespace pegtl = TAO_PEGTL_NAMESPACE;
 
+    // clang-format off
+
     // aliases
 
     using any = pegtl::any;
-
-    // clang-format off
 
     namespace meta
     {

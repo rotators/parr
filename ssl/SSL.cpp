@@ -34,6 +34,26 @@ namespace parr::action::ssl
     std::string LastProcedureName;
 
     template<>
+    struct on<rule::bol>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput&, Parser::State& )
+        {
+            std::cout << "APPLY BOL" << std::endl;
+        }
+    };
+
+    template<>
+    struct on<rule::eol>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput&, Parser::State& )
+        {
+            std::cout << "APPLY EOL" << std::endl;
+        }
+    };
+
+    template<>
     struct on<rule::ssl::procedure::name>
     {
         template<typename ActionInput>

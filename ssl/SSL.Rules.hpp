@@ -1,7 +1,5 @@
 #pragma once
 
-#include <tao/pegtl.hpp>
-
 #include "Rules.hpp"
 
 namespace parr::rule::ssl
@@ -54,12 +52,24 @@ namespace parr::rule::ssl
             using procedureScope       = pegtl::sor<localEmpty, localAssign>;
         };
 
-        struct increase                : pegtl::seq<pegtl::identifier, blankOpt, operators::increase, blankOpt, charSemicolon>{}; // name++;
+        struct increase          : pegtl::seq<name, blankOpt, operators::increase, blankOpt, charSemicolon>{}; // name++;
 
         struct globalScope             : declaration::globalScope{};
         struct procedureScope          : pegtl::sor<declaration::procedureScope, increase>{};
     };
 
+    struct block
+    {
+        using stringIf           = pegtl::string<'i', 'f'>;
+        using stringThen         = pegtl::string<'t', 'h', 'e', 'n'>;
+        using stringElse         = pegtl::string<'e', 'l', 's', 'e'>;
+
+        struct empty             : pegtl::seq<stringBegin, blankOpt, stringEnd>{};
+
+        struct ifEmpty           : pegtl::seq<stringIf, pegtl::not_at<blank, stringThen>, pegtl::until<stringThen, any>, blank, empty>{}; // TODO
+
+        struct x                 : pegtl::sor<empty, ifEmpty>{};
+    };
 
     // procedures
 
@@ -112,9 +122,10 @@ namespace parr::rule::ssl
         };
 
         // matches whole procedure body - including "begin" and "end" - AFTER it's parsed
-        struct body                   : pegtl::seq<scope::begin, pegtl::until<scope::end, pegtl::sor<eol, blank, variable::procedureScope>>>{};
+        struct body              : pegtl::seq<scope::begin, pegtl::until<scope::end, pegtl::sor<eol, blank, variable::procedureScope, block::x>>>{};
 
-        struct x                      : pegtl::sor<declaration::x, nop::x, pegtl::seq<arguments::x, body>>{};
+        struct x_at              : pegtl::at<pegtl::opt<stringImport, blank>, string, blank, name, pegtl::opt<blankOpt, arg::empty>>{};
+        struct x                 : pegtl::seq<x_at, pegtl::sor<declaration::x, nop::x, pegtl::seq<arguments::x, body>>>{};
     };
 
     // lines
