@@ -18,7 +18,7 @@ namespace parr::action::ssl
         {
             std::string_view rule = pegtl::demangle<Rule>();
 
-            if( !rule.starts_with( "parr::rule" ) )
+            if( !rule.starts_with( "" ) )
                 return;
 
             std::cout << "SUCCESS " << rule << std::endl;
@@ -50,6 +50,12 @@ namespace parr::action::ssl
         static void apply( const ActionInput&, Parser::State& )
         {
             std::cout << "APPLY EOL" << std::endl;
+        }
+
+        template<typename ActionInput>
+        static void success( const ActionInput&, Parser::State& )
+        {
+            std::cout << "SUCCESS EOL" << std::endl;
         }
     };
 
@@ -114,128 +120,12 @@ namespace parr::action::ssl
     };
 
 }  // namespace parr::action::ssl
-/*
-namespace parr::action::ssl
-{
-    template<typename ActionInput>
-    void PrintActionInput( const ActionInput& input )
-    {
-        std::cout << "INPUT:position(" << input.position() << "),size:" << input.size() << std::endl;
-    }
 
-    template<typename Rule>
-    struct on : pegtl::nothing<Rule>
-    {};
-
-    template<>
-    struct on<rule::ssl::line::bol_>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput&, Parser::State& )
-        {
-            std::cout << "<- BOL" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::ssl::line::eol_>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput&, Parser::State& )
-        {
-            std::cout << "EOL ->" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::eof>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput&, Parser::State& state )
-        {
-            std::cout << "EOF =>" << std::endl;
-
-            state.Result = true;
-        }
-    };
-
-    template<>
-    struct on<rule::commentShort>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "CommentShort:<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::commentMedium>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "CommentMedium<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::commentLong>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "CommentLong:<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::ssl::procedureHead>  // called after matching [procedure * name * begin]
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "ProcedureHead<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::ssl::procedureEmpty>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            PrintActionInput( input );
-            std::cout << "ProcedureEmpty<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::ssl::procedureEmpty::name>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "ProcedureEmpty::Name<" << input.string() << ">" << std::endl;
-        }
-    };
-}  // namespace parr::action::ssl
-*/
 parr::SSL::SSL() {}
 
 parr::SSL::~SSL() {}
 
 void parr::SSL::Run( const Parser::RunMode& mode, pegtl::string_input<>& input, Parser::State& state )
 {
-    /*
-    if( mode == Parser::RunMode::Parse )
-    {
-        if( !pegtl::parse<rule::ssl::rGlobalScope, action::ssl::on, action::ssl::control>( input, state ) )
-            state.Result = false;
-
-        return;
-    }
-    */
-
     run::Run<rule::ssl::rGlobalScope, action::ssl::on>( mode, input, state );
 }

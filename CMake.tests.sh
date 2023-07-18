@@ -2,12 +2,6 @@
 
 set -e
 
-if [[ ! -f Build/Makefile ]]; then
-	rm -fr Build
-fi
-
-if [[ ! -d Build ]]; then
-	cmake -B Build
-fi
+./CMake.sh || exit 1
 
 cmake --build Build --target parrssl-test

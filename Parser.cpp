@@ -87,36 +87,23 @@ bool parr::Parser::Run( Tool& tool, const RunMode& mode, const std::string& cont
     else
     {
         pegtl::string_input input( content, contentName );
-        /*
-        std::cout << ' ' << std::string( 78, '*' ) << std::endl
-                  << content << std::endl
-                  << ' ' << std::string( 78, '*' ) << std::endl;
-*/
-        // try
-        {
-            //    std::cout << "PASS#1" << std::endl;
-            tool.Run( ( mode == RunMode::ParseErrorTrace ? RunMode::Parse : mode ), input, state );
-        }
+
+        tool.Run( ( mode == RunMode::ParseErrorTrace ? RunMode::Parse : mode ), input, state );
 
         if( !state.Result )
-        //catch( const pegtl::parse_error& e )
         {
-            /*
-            const auto position = e.positions().front();
-            std::cout << e.what() << std::endl
-                      << input.line_at( position ) << std::endl
-                      << std::string( position.column, '-' ) << '^' << std::endl;
-            */
         }
 
         if( mode == RunMode::ParseErrorTrace && !state.Result )
-        {
-            //            std::cout << "PASS#2" << std::endl;
             return Run( tool, RunMode::Trace, content, contentName );
+        else if( !state.Result )
+        {
+            std::cout << "PARSE FAIL" << std::endl;
+            const auto position = input.position();
+            std::cout
+              << input.line_at( position ) << std::endl
+              << std::string( position.column, '-' ) << '^' << std::endl;
         }
     }
-
-    if( !state.Result )
-        std::cout << "PARSE FAIL" << std::endl;
     return state.Result;
 }

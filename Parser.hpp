@@ -37,6 +37,9 @@ namespace parr
         class Tool
         {
         public:
+            Tool()          = default;
+            virtual ~Tool() = default;
+
             virtual void Run( const RunMode& mode, pegtl::string_input<>& input, State& state ) = 0;
         };
 
