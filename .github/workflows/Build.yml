@@ -1,0 +1,57 @@
+name: Build
+
+on:
+ push:
+  paths:
+  - '.github/workflows/Build.yml'
+  - 'CMake*'
+  - 'CMake/**'
+  - '**.hpp'
+  - '**.cpp'
+ pull_request:
+  paths:
+  - '.github/workflows/Build.yml'
+  - 'CMake*'
+  - 'CMake/**'
+  - '**.hpp'
+  - '**.cpp'
+ workflow_dispatch:
+
+concurrency:
+  group:              ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+defaults:
+ run:
+  shell: bash
+
+jobs:
+
+ Build:
+  runs-on: ${{ matrix.cfg.os }}
+  name:    ${{ matrix.cfg.name }}
+  strategy:
+   fail-fast: false
+   matrix:
+    cfg:
+    - { os: ubuntu-latest, name: GCC,    cc: gcc,   cxx: g++     }
+    - { os: ubuntu-latest, name: Clang,  cc: clang, cxx: clang++ }
+    - { os: windows-2019,  name: VS2019, cc: cl,    cxx: cl      }
+    - { os: windows-2022,  name: VS2022, cc: cl,    cxx: cl      }
+
+  steps:
+
+  - name: Clone repository
+    uses: actions/checkout@v3
+
+  - name: Build configuration
+    run:  cmake -B Build
+    env:
+     CC:   ${{ matrix.cfg.cc }}
+     CXX:  ${{ matrix.cfg.cxx }}
+
+  - name: Build
+    run:  cmake --build Build
+
+  - name: Test (parrssl)
+    run:  cmake --build Build --target parrssl-test
