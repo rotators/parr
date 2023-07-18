@@ -3,25 +3,25 @@
 
 namespace parr
 {
-    template<std::size_t _need, typename T, std::size_t _sizeof = sizeof( T )>
+    template<size_t need_, typename T, size_t sizeof_ = sizeof( T )>
     void static_assert_size_type()
     {
-        static_assert( _need == _sizeof );
+        static_assert( need_ == sizeof_ );
     }
 
-    template<typename T1, typename T2, std::size_t sizeofT1 = sizeof( T1 ), std::size_t sizeofT2 = sizeof( T2 )>
+    template<typename T1, typename T2, size_t sizeofT1 = sizeof( T1 ), size_t sizeofT2 = sizeof( T2 )>
     void static_assert_samesize_types()
     {
         static_assert( sizeofT1 == sizeofT2 );
     }
 
-    template<typename T, std::size_t _sizeof = sizeof( T ), std::size_t _alignof = alignof( T )>
+    template<typename T, size_t sizeof_ = sizeof( T ), size_t alignof_ = alignof( T )>
     void static_assert_samesizealign_type()
     {
-        static_assert( _sizeof == _alignof );
+        static_assert( sizeof_ == alignof_ );
     }
 
-    template<typename T1, typename T2, std::size_t sizeofT1 = sizeof( T1 ), std::size_t sizeofT2 = sizeof( T2 ), std::size_t alignofT1 = alignof( T1 ), std::size_t alignofT2 = alignof( T2 )>
+    template<typename T1, typename T2, size_t sizeofT1 = sizeof( T1 ), size_t sizeofT2 = sizeof( T2 ), size_t alignofT1 = alignof( T1 ), size_t alignofT2 = alignof( T2 )>
     void static_assert_samesizealign_types()
     {
         static_assert( sizeofT1 == sizeofT2 );

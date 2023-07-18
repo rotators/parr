@@ -51,7 +51,7 @@ jobs:
      CXX:  ${{ matrix.cfg.cxx }}
 
   - name: Build
-    run:  cmake --build Build
+    run:  cmake --build Build --config Release
 
   - name: Test (parrssl)
-    run:  cmake --build Build --target parrssl-test
+    run:  cmake --build Build --config Release --target parrssl-test

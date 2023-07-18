@@ -62,14 +62,24 @@ target_sources(${PARR_SSL}
 )
 target_link_libraries(${PARR_SSL} PRIVATE ${PARR_LIB} cxxopts)
 
+# https://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html
+# https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically/
+# https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
 get_property(PARR_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PARR_TARGETS})
     message(STATUS "Configure ${target} ...")
     parr_build_option(${target} "compile" UNIX FALSE -O2                    PARR_COMPILE_FLAG_O2)
 
+    parr_build_option(${target} "compile" MSVC TRUE  /options:strict        PARR_COMPILE_FLAG_options_strict)
+    parr_build_option(${target} "compile" MSVC TRUE  /permissive-           PARR_COMPILE_FLAG_permissive_)
+    parr_build_option(${target} "compile" MSVC FALSE /Ot                    PARR_COMPILE_FLAG_Ot)
+    parr_build_option(${target} "compile" MSVC FALSE /bigobj                PARR_COMPILE_FLAG_bigobj)
+
     parr_build_option(${target} "compile" UNIX TRUE  -Wall                  PARR_COMPILE_FLAG_Wall)
     parr_build_option(${target} "compile" UNIX TRUE  -Wextra                PARR_COMPILE_FLAG_Wextra)
     parr_build_option(${target} "compile" UNIX TRUE  -Wpedantic             PARR_COMPILE_FLAG_Wpedantic)
+
+    parr_build_option(${target} "compile" MSVC TRUE  /W4                    PARR_COMPILE_FLAG_W4)
 
     parr_build_option(${target} "compile" UNIX FALSE -Wdate-time            PARR_COMPILE_FLAG_Wdate_time)
     parr_build_option(${target} "compile" UNIX FALSE -Weffc++               PARR_COMPILE_FLAG_Weffcxx)
@@ -80,6 +90,8 @@ foreach(target IN ITEMS ${PARR_TARGETS})
     parr_build_option(${target} "compile" UNIX FALSE -Wuseless-cast         PARR_COMPILE_FLAG_Wuseless-cast)
 
     parr_build_option(${target} "compile" UNIX FALSE -Werror                PARR_COMPILE_FLAG_Werror)
+
+    parr_build_option(${target} "link"    MSVC FALSE /OPT:REF               PARR_COMPILE_FLAG_OPT_REF)
 endforeach()
 
 #
