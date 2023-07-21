@@ -56,8 +56,8 @@ target_include_directories(${PARR_LIB} PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
 target_link_libraries(${PARR_LIB} PUBLIC pegtl)
 
 add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
-    COMMENT Generating SSL.abnf header
-    COMMAND ${PROJECT_BINARY_DIR}/parrabnf ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf > ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
+    COMMENT "Generating SSL.abnf header"
+    COMMAND "$<TARGET_FILE:${PARR_ABNF}>" ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf > ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
     DEPENDS ${PARR_ABNF} ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf
 )
 
