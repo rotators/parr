@@ -34,30 +34,36 @@ namespace parr::action::ssl
     std::string LastProcedureName;
 
     template<>
-    struct on<rule::bol>
+    struct on<rule::blanks::spaces>
     {
         template<typename ActionInput>
-        static void apply( const ActionInput&, Parser::State& )
+        static void apply( const ActionInput& input, Parser::State& )
         {
-            std::cout << "APPLY BOL" << std::endl;
+            std::cout << "blanks::spaces<size:" << input.size() << ">" << std::endl;
         }
     };
 
     template<>
-    struct on<rule::eol>
+    struct on<rule::blanks::tabs>
     {
         template<typename ActionInput>
-        static void apply( const ActionInput&, Parser::State& )
+        static void apply( const ActionInput& input, Parser::State& )
         {
-            std::cout << "APPLY EOL" << std::endl;
-        }
-
-        template<typename ActionInput>
-        static void success( const ActionInput&, Parser::State& )
-        {
-            std::cout << "SUCCESS EOL" << std::endl;
+            std::cout << "blanks::tabs<size:" << input.size() << ">" << std::endl;
         }
     };
+
+    template<>
+    struct on<rule::blanks::eols>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput& input, Parser::State& )
+        {
+            std::cout << "blanks::eols<size:" << input.size() << ">" << std::endl;
+        }
+    };
+
+    //
 
     template<>
     struct on<rule::ssl::procedure::name>
@@ -65,8 +71,28 @@ namespace parr::action::ssl
         template<typename ActionInput>
         static void apply( const ActionInput& input, Parser::State& )
         {
-            std::cout << "APPLY procedure::name<" << input.string() << ">" << std::endl;
+            std::cout << "ssl::procedure::name<" << input.string() << ">" << std::endl;
             LastProcedureName = input.string();
+        }
+    };
+
+    template<>
+    struct on<rule::ssl::procedure::head>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput& input, Parser::State& )
+        {
+            std::cout << "ssl::procedure::head<" << input.string() << ">" << std::endl;
+        }
+    };
+
+    template<>
+    struct on<rule::ssl::procedure::arguments>
+    {
+        template<typename ActionInput>
+        static void apply( const ActionInput& input, Parser::State& )
+        {
+            std::cout << "ssl::procedure::arguments<" << input.string() << ">" << std::endl;
         }
     };
 
@@ -76,36 +102,17 @@ namespace parr::action::ssl
         template<typename ActionInput>
         static void apply( const ActionInput& input, Parser::State& )
         {
-            std::cout << "APPLY procedure::declaration<" << LastProcedureName << "><" << input.string() << ">" << std::endl;
+            std::cout << "ssl::procedure::declaration<" << LastProcedureName << "><" << input.string() << ">" << std::endl;
         }
     };
 
-    template<>
-    struct on<rule::ssl::procedure::nop>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "APPLY procedure::empty<" << input.string() << ">" << std::endl;
-        }
-    };
-
-    template<>
-    struct on<rule::ssl::procedure::arguments::none>
-    {
-        template<typename ActionInput>
-        static void apply( const ActionInput& input, Parser::State& )
-        {
-            std::cout << "APPLY procedure::arg::none<" << input.string() << ">" << std::endl;
-        }
-    };
     template<>
     struct on<rule::ssl::procedure::scope::begin>
     {
         template<typename ActionInput>
         static void apply( const ActionInput&, Parser::State& )
         {
-            std::cout << "APPLY procedure::scope::begin" << std::endl;
+            std::cout << "ssl::procedure::scope::begin" << std::endl;
         }
     };
 
@@ -115,7 +122,7 @@ namespace parr::action::ssl
         template<typename ActionInput>
         static void apply( const ActionInput&, Parser::State& )
         {
-            std::cout << "APPLY procedure::scope::end>" << std::endl;
+            std::cout << "ssl::procedure::scope::end" << std::endl;
         }
     };
 
@@ -127,5 +134,5 @@ parr::SSL::~SSL() {}
 
 void parr::SSL::Run( const Parser::RunMode& mode, pegtl::string_input<>& input, Parser::State& state )
 {
-    run::Run<rule::ssl::rGlobalScope, action::ssl::on>( mode, input, state );
+    run::Run<rule::ssl::GlobalScope, action::ssl::on>( mode, input, state );
 }
