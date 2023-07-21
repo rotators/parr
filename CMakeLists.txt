@@ -84,11 +84,11 @@ target_link_libraries(${PARR_SSL} PRIVATE ${PARR_LIB} cxxopts)
 get_property(PARR_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PARR_TARGETS})
     message(STATUS "Configure ${target} ...")
-    parr_build_option(${target} "compile" UNIX FALSE -Os                    PARR_COMPILE_FLAG_O2)
+    parr_build_option(${target} "compile" UNIX FALSE -Os                    PARR_COMPILE_FLAG_Os)
 
     parr_build_option(${target} "compile" MSVC TRUE  /options:strict        PARR_COMPILE_FLAG_options_strict)
     parr_build_option(${target} "compile" MSVC TRUE  /permissive-           PARR_COMPILE_FLAG_permissive_)
-    parr_build_option(${target} "compile" MSVC FALSE /Os                    PARR_COMPILE_FLAG_Ot)
+    parr_build_option(${target} "compile" MSVC FALSE /Os                    PARR_COMPILE_FLAG_Os)
     parr_build_option(${target} "compile" MSVC FALSE /bigobj                PARR_COMPILE_FLAG_bigobj)
 
     parr_build_option(${target} "compile" UNIX TRUE  -Wall                  PARR_COMPILE_FLAG_Wall)
