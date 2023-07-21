@@ -2,7 +2,6 @@
 
 #include <string>
 
-#undef __cpp_exceptions
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/analyze.hpp>
 #include <tao/pegtl/contrib/coverage.hpp>
@@ -72,7 +71,7 @@ namespace parr::run
             state.Result = false;
     }
 
-    template<typename Rule, template<typename> class Action>
+    template<typename Rule, template<typename> class Action = pegtl::nothing>
     void Run( const Parser::RunMode& mode, pegtl::string_input<>& input, Parser::State& state )
     {
         switch( mode )

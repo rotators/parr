@@ -1,0 +1,42 @@
+SSL = GlobalScope
+
+eol            = LF ;/ CRLF 
+
+; comments
+
+string-comment-short        = "//"
+string-comment-long-prefix  = "/*"
+string-comment-long-suffix  = "*/"
+
+; blanks
+
+spaces               = 1*(%x20)
+tabs                 = 1*(%x09)
+
+comment-short  = string-comment-short         [*(VCHAR / spaces / tabs)]        eol
+;comment-medium = string-comment-long-prefix  [CHAR / spaces / tabs / !eol)] string-comment-long-suffix
+comment-long   = string-comment-long-prefix   [*(VCHAR / spaces / tabs / eol)]  string-comment-long-suffix
+
+blank1     = 1*(spaces / tabs / comment-short / comment-long)
+blank0     = 0*(spaces / tabs / comment-short / comment-long)
+
+string-begin     = %s"begin"
+string-end       = %s"end"
+string-import    = %s"import"
+string-semicolon = ";"
+
+
+identifier-head   = ALPHA ;/ "&" / "$" ;/ ALPHA
+identifier-tail   = ALPHA / DIGIT / "_"
+identifier        = identifier-head *identifier-tail
+
+string-variable  = %s"variable"
+
+string-procedure = %s"procedure"
+
+procedure-head        = string-procedure blank1 identifier
+procedure-declaration = procedure-head blank0 string-semicolon
+procedure-import      = string-import blank1 procedure-declaration
+procedure             = (procedure-import / procedure-declaration)
+
+GlobalScope = *(eol / blank1 / procedure)
