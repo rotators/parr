@@ -5,14 +5,14 @@ project(parr
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD           20)
+set(CMAKE_CXX_STANDARD_REQUIRED  YES)
+set(CMAKE_SKIP_INSTALL_RULES     YES)
+
 set(PARR_BIN  ${PROJECT_NAME})
 set(PARR_LIB  ${PARR_BIN}lib)
 set(PARR_SSL  ${PARR_BIN}ssl)
 set(PARR_ABNF ${PARR_BIN}abnf)
-
-set(CMAKE_CXX_STANDARD           20)
-set(CMAKE_CXX_STANDARD_REQUIRED  YES)
-set(CMAKE_SKIP_INSTALL_RULES     YES)
 
 macro(install)
 endmacro()
@@ -125,4 +125,17 @@ add_subdirectory(Test)
 
 if(NOT "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" AND NOT EXISTS .gitignore)
     file(GENERATE OUTPUT .gitignore CONTENT "*")
+endif()
+
+#
+#
+#
+
+if(DEFINED ARTIFACTS AND NOT "${ARTIFACTS}" STREQUAL "")
+    add_custom_target(artifacts
+        ALL
+        COMMENT    "Packing artifacts: ${ARTIFACTS}"
+        COMMAND    "${CMAKE_COMMAND}" -E tar cv "${CMAKE_CURRENT_LIST_DIR}/${ARTIFACTS}" --format=zip -- "$<TARGET_FILE:${PARR_SSL}>"
+        BYPRODUCTS "${CMAKE_CURRENT_LIST_DIR}/${ARTIFACTS}"
+    )
 endif()

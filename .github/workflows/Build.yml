@@ -55,3 +55,35 @@ jobs:
 
   - name: Test (parrssl)
     run:  cmake --build Build --config Release --target parrssl-test
+
+ Artifacts:
+  needs:   Build
+  runs-on: ${{ matrix.cfg.os }}
+  name:    ${{ matrix.cfg.name }}
+  strategy:
+   fail-fast: true
+   matrix:
+    cfg:
+    - { os: ubuntu-latest,   name: Linux,   cc: gcc,   cxx: g++,  artifacts: parr-linux.zip }
+    - { os: windows-latest,  name: Windows, cc: cl,    cxx: cl,   artifacts: parr-windows.zip }
+
+  steps:
+
+  - name: Clone repository
+    uses: actions/checkout@v3
+
+  - name: Build configuration
+    run:  cmake -B Build -DARTIFACTS=${{ matrix.cfg.artifacts }}
+    env:
+     CC:   ${{ matrix.cfg.cc }}
+     CXX:  ${{ matrix.cfg.cxx }}
+
+  - name: Build
+    run:  cmake --build Build --config Release --target artifacts
+
+  - name: Artifacts
+    uses: actions/upload-artifact@v3
+    with:
+     path:              ${{ matrix.cfg.artifacts }}
+     retention-days:    7
+     if-no-files-found: error
