@@ -19,7 +19,7 @@ endmacro()
 macro(export)
 endmacro()
 
-# Has to done very early if CMake directory is submodule
+# Has to be done very early if CMake directory is submodule
 if(EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD" AND NOT EXISTS "${PROJECT_SOURCE_DIR}/.git/modules")
     find_package(Git QUIET)
     if(Git_FOUND)
@@ -84,6 +84,8 @@ target_link_libraries(${PARR_SSL} PRIVATE ${PARR_LIB} cxxopts)
 get_property(PARR_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PARR_TARGETS})
     message(STATUS "Configure ${target} ...")
+    # general
+
     parr_build_option(${target} "compile" UNIX FALSE -Os                    PARR_COMPILE_FLAG_Os)
 
     parr_build_option(${target} "compile" MSVC TRUE  /options:strict        PARR_COMPILE_FLAG_options_strict)
@@ -95,6 +97,8 @@ foreach(target IN ITEMS ${PARR_TARGETS})
     parr_build_option(${target} "compile" MSVC TRUE  /permissive-           PARR_COMPILE_FLAG_permissive_)
     parr_build_option(${target} "compile" MSVC FALSE /Ot                    PARR_COMPILE_FLAG_Ot)
     parr_build_option(${target} "compile" MSVC FALSE /bigobj                PARR_COMPILE_FLAG_bigobj)
+
+    # warnings
 
     parr_build_option(${target} "compile" UNIX TRUE  -Wall                  PARR_COMPILE_FLAG_Wall)
     parr_build_option(${target} "compile" UNIX TRUE  -Wextra                PARR_COMPILE_FLAG_Wextra)
@@ -112,6 +116,8 @@ foreach(target IN ITEMS ${PARR_TARGETS})
 
     parr_build_option(${target} "compile" UNIX FALSE -Werror                PARR_COMPILE_FLAG_Werror)
 
+    # misc
+
     parr_build_option(${target} "link"    MSVC FALSE /OPT:REF               PARR_COMPILE_FLAG_OPT_REF)
 endforeach()
 
@@ -128,14 +134,16 @@ if(NOT "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" AND NOT EXISTS .
 endif()
 
 #
-#
+# Copy selected targets to different directory
+# Used with GitHub Actions
 #
 
-if(DEFINED ARTIFACTS AND NOT "${ARTIFACTS}" STREQUAL "")
-    add_custom_target(artifacts
+if(DEFINED ENV{ARTIFACTS_DIR} AND NOT "$ENV{ARTIFACTS_DIR}" MATCHES "^(|[0-9]+|[Oo][Nn]|[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Yy]|[Oo][Ff][Ff]|[Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Nn])$" )
+    message(STATUS "Artifacts directory: $ENV{ARTIFACTS_DIR}")
+    add_custom_target(artifacts-dir
         ALL
-        COMMENT    "Packing artifacts: ${ARTIFACTS}"
-        COMMAND    "${CMAKE_COMMAND}" -E tar cv "${CMAKE_CURRENT_LIST_DIR}/${ARTIFACTS}" --format=zip -- "$<TARGET_FILE:${PARR_SSL}>"
-        BYPRODUCTS "${CMAKE_CURRENT_LIST_DIR}/${ARTIFACTS}"
+        COMMENT "Copying artifacts: $ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PARR_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
     )
 endif()
