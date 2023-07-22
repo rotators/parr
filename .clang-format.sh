@@ -89,10 +89,7 @@ clang_format()
 			$line =~ s/>[\t ]+;/>;/;
 
 			my $idx = index( $line, " $char " );
-			if( $idx > $max )
-			{
-				$max = $idx;
-			}
+			$max = $idx if( $idx > $max );
 			$editable = 1;
 		}
 		elsif( $edit && scalar(@lines) && $lines[-1][1] == 1 && $line =~ /^[ ]*({};.*)$/ )
@@ -138,6 +135,12 @@ clang_format()
 
 ###
 
-for from in *.cpp *.hpp ssl/*.cpp ssl/*.hpp executable/*.cpp; do
-	clang_format "$from"
-done
+if [[ $# -gt 0 ]]; then
+	if [[ -f "$1" ]]; then
+		clang_format "$1"
+	fi
+else
+	for from in *.cpp *.hpp ssl/*.cpp ssl/*.hpp executable/*.cpp; do
+		clang_format "$from"
+	done
+fi
