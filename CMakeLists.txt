@@ -5,21 +5,22 @@ project(parr
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD           20)
+set(CMAKE_CXX_STANDARD_REQUIRED  YES)
+set(CMAKE_CXX_EXTENSIONS         NO)
+set(CMAKE_SKIP_INSTALL_RULES     YES)
+
 set(PARR_BIN  ${PROJECT_NAME})
 set(PARR_LIB  ${PARR_BIN}lib)
 set(PARR_SSL  ${PARR_BIN}ssl)
 set(PARR_ABNF ${PARR_BIN}abnf)
-
-set(CMAKE_CXX_STANDARD           20)
-set(CMAKE_CXX_STANDARD_REQUIRED  YES)
-set(CMAKE_SKIP_INSTALL_RULES     YES)
 
 macro(install)
 endmacro()
 macro(export)
 endmacro()
 
-# Has to done very early if CMake directory is submodule
+# Has to be done very early if CMake directory is submodule
 if(EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD" AND NOT EXISTS "${PROJECT_SOURCE_DIR}/.git/modules")
     find_package(Git QUIET)
     if(Git_FOUND)
@@ -31,7 +32,16 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 include(BuildOption)
 
+#
+# External libraries
+# All libraries must be configured in subdirectory
+#
+
 add_subdirectory(Libs)
+
+#
+# Project targets
+#
 
 add_library(${PARR_LIB} STATIC)
 target_sources(${PARR_LIB}
@@ -77,47 +87,71 @@ target_link_libraries(${PARR_ABNF} PRIVATE pegtl)
 parr_executable(${PARR_SSL})
 target_link_libraries(${PARR_SSL} PRIVATE ${PARR_LIB} cxxopts)
 
-
 # https://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html
 # https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically/
 # https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
 get_property(PARR_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PARR_TARGETS})
     message(STATUS "Configure ${target} ...")
-    parr_build_option(${target} "compile" UNIX FALSE -Os                    PARR_COMPILE_FLAG_Os)
+    # general
 
-    parr_build_option(${target} "compile" MSVC TRUE  /options:strict        PARR_COMPILE_FLAG_options_strict)
-    parr_build_option(${target} "compile" MSVC TRUE  /permissive-           PARR_COMPILE_FLAG_permissive_)
-    parr_build_option(${target} "compile" MSVC FALSE /Os                    PARR_COMPILE_FLAG_Os)
-    parr_build_option(${target} "compile" MSVC FALSE /bigobj                PARR_COMPILE_FLAG_bigobj)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Os)
 
-    parr_build_option(${target} "compile" UNIX TRUE  -Wall                  PARR_COMPILE_FLAG_Wall)
-    parr_build_option(${target} "compile" UNIX TRUE  -Wextra                PARR_COMPILE_FLAG_Wextra)
-    parr_build_option(${target} "compile" UNIX TRUE  -Wpedantic             PARR_COMPILE_FLAG_Wpedantic)
+    project_build_option(${target} MSVC COMPILE CXX TRUE  /options:strict)
+    project_build_option(${target} MSVC COMPILE CXX TRUE  /permissive-)
+    project_build_option(${target} MSVC COMPILE CXX FALSE /Os)
+    project_build_option(${target} MSVC COMPILE CXX FALSE /bigobj)
 
-    parr_build_option(${target} "compile" MSVC TRUE  /W4                    PARR_COMPILE_FLAG_W4)
+    # warnings
 
-    parr_build_option(${target} "compile" UNIX FALSE -Wdate-time            PARR_COMPILE_FLAG_Wdate_time)
-    parr_build_option(${target} "compile" UNIX FALSE -Weffc++               PARR_COMPILE_FLAG_Weffcxx)
-    parr_build_option(${target} "compile" UNIX FALSE -Wmissing-include-dirs PARR_COMPILE_FLAG_Wmissing_include_dirs)
-    parr_build_option(${target} "compile" UNIX FALSE -Wold-style-cast       PARR_COMPILE_FLAG_Wold_style_cast)
-    parr_build_option(${target} "compile" UNIX FALSE -Wshadow               PARR_COMPILE_FLAG_Wshadow)
-    parr_build_option(${target} "compile" UNIX FALSE -Wunused-macros        PARR_COMPILE_FLAG_Wunused_macros)
-    parr_build_option(${target} "compile" UNIX FALSE -Wuseless-cast         PARR_COMPILE_FLAG_Wuseless-cast)
+    project_build_option(${target} UNIX COMPILE CXX TRUE  -Wall)
+    project_build_option(${target} UNIX COMPILE CXX TRUE  -Wextra)
+    project_build_option(${target} UNIX COMPILE CXX TRUE  -Wpedantic)
 
-    parr_build_option(${target} "compile" UNIX FALSE -Werror                PARR_COMPILE_FLAG_Werror)
+    project_build_option(${target} MSVC COMPILE CXX TRUE  /W4)
 
-    parr_build_option(${target} "link"    MSVC FALSE /OPT:REF               PARR_COMPILE_FLAG_OPT_REF)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wdate-time)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Weffc++)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wmissing-include-dirs)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wold-style-cast)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wshadow)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wunused-macros)
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Wuseless-cast)
+
+    project_build_option(${target} UNIX COMPILE CXX FALSE -Werror)
+
+    # misc
+
+    project_build_option(${target} MSVC COMPILE CXX FALSE /MT)
+    project_build_option(${target} MSVC LINKING CXX FALSE /OPT:REF)
 endforeach()
 
 #
-#
+# Generate targets running tests
+# While they are always generated, they must be started manually
 #
 
 add_subdirectory(Test)
 
 #
+# Add build directory to git ignores list
+#
 
 if(NOT "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" AND NOT EXISTS .gitignore)
     file(GENERATE OUTPUT .gitignore CONTENT "*")
+endif()
+
+#
+# Copy selected targets to different directory
+# Used with GitHub Actions
+#
+
+if(DEFINED ENV{ARTIFACTS_DIR} AND NOT "$ENV{ARTIFACTS_DIR}" MATCHES "^(|[0-9]+|[Oo][Nn]|[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Yy]|[Oo][Ff][Ff]|[Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Nn])$" )
+    message(STATUS "Artifacts directory: $ENV{ARTIFACTS_DIR}")
+    add_custom_target(artifacts-dir
+        ALL
+        COMMENT "Copying artifacts: $ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PARR_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
+    )
 endif()

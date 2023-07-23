@@ -4,17 +4,18 @@ on:
  push:
   paths:
   - '.github/workflows/Build.yml'
+  - '.github/workflows/CodeQL.yml'
   - 'CMake*'
-  - 'CMake/**'
-  - '**.hpp'
+  - '**.cmake'
   - '**.cpp'
+  - '**.hpp'
  pull_request:
   paths:
   - '.github/workflows/Build.yml'
   - 'CMake*'
-  - 'CMake/**'
-  - '**.hpp'
+  - '**.cmake'
   - '**.cpp'
+  - '**.hpp'
  workflow_dispatch:
 
 concurrency:
@@ -34,10 +35,10 @@ jobs:
    fail-fast: false
    matrix:
     cfg:
-    - { os: ubuntu-latest, name: GCC,    cc: gcc,   cxx: g++     }
-    - { os: ubuntu-latest, name: Clang,  cc: clang, cxx: clang++ }
-    - { os: windows-2019,  name: VS2019, cc: cl,    cxx: cl      }
-    - { os: windows-2022,  name: VS2022, cc: cl,    cxx: cl      }
+    - { os: ubuntu-latest, name: GCC,    cc: gcc,   cxx: g++,     artifacts-dir: parr-linux }
+    - { os: ubuntu-latest, name: Clang,  cc: clang, cxx: clang++, artifacts-dir: false }
+    - { os: windows-2019,  name: VS2019, cc: cl,    cxx: cl,      artifacts-dir: false }
+    - { os: windows-2022,  name: VS2022, cc: cl,    cxx: cl,      artifacts-dir: parr-windows }
 
   steps:
 
@@ -47,11 +48,28 @@ jobs:
   - name: Build configuration
     run:  cmake -B Build
     env:
-     CC:   ${{ matrix.cfg.cc }}
-     CXX:  ${{ matrix.cfg.cxx }}
+     CC:            ${{ matrix.cfg.cc }}
+     CXX:           ${{ matrix.cfg.cxx }}
+     ARTIFACTS_DIR: ${{ matrix.cfg.artifacts-dir }}
 
   - name: Build
     run:  cmake --build Build --config Release
 
   - name: Test (parrssl)
     run:  cmake --build Build --config Release --target parrssl-test
+
+  - name: Artifacts
+    if:   ${{ matrix.cfg.artifacts-dir }}
+    uses: actions/upload-artifact@v3
+    with:
+     name:              ${{ matrix.cfg.artifacts-dir }}
+     path:              ${{ matrix.cfg.artifacts-dir }}/
+     retention-days:    7
+     if-no-files-found: error
+
+ # note to self: GitHub UI ignores reusable workflow name and uses job name below instead
+ CodeQL:
+  needs: Build
+  uses:  ./.github/workflows/CodeQL.yml
+  permissions:
+   security-events: write
