@@ -67,7 +67,8 @@ jobs:
      retention-days:    7
      if-no-files-found: error
 
- CodeQQ:
+ # note to self: GitHub UI ignores reusable workflow name and uses job name below instead
+ CodeQL:
   needs: Build
   uses:  ./.github/workflows/CodeQL.yml
   permissions:
