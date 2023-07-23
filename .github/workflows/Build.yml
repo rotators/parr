@@ -70,3 +70,5 @@ jobs:
  CodeQL:
   needs: Build
   uses:  ./.github/workflows/CodeQL.yml
+  permissions:
+   security-events: write
