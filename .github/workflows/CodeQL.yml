@@ -1,0 +1,25 @@
+name: CodeQL
+
+on:
+ workflow_call:
+
+jobs:
+
+ Analyze:
+  runs-on: ubuntu-latest
+
+  steps:
+
+  - name: Clone repository
+    uses: actions/checkout@v3
+
+  - name: Initialize CodeQL
+    uses: github/codeql-action/init@v2
+    with:
+     languages: cpp
+
+  - name: Autobuild
+    uses: github/codeql-action/autobuild@v2
+
+  - name: Perform CodeQL Analysis
+    uses: github/codeql-action/analyze@v2

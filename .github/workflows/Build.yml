@@ -65,3 +65,7 @@ jobs:
      path:              ${{ matrix.cfg.artifacts-dir }}/
      retention-days:    7
      if-no-files-found: error
+
+ CodeQL:
+  needs: Build
+  uses:  ./.github/workflows/CodeQL.yml
