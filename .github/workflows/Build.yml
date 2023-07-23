@@ -4,6 +4,7 @@ on:
  push:
   paths:
   - '.github/workflows/Build.yml'
+  - '.github/workflows/CodeQL.yml'
   - 'CMake*'
   - '**.cmake'
   - '**.cpp'
