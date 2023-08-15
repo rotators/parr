@@ -99,12 +99,8 @@ prs_executable(${PRS_BIN_SSL} ssl)
 # https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
 get_property(PRS_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PRS_TARGETS})
-    get_target_property(tmp ${target} ANTLR_LIBRARY)
-    if( ${tmp} )
-        continue()
-    endif()
-
     message(STATUS "Configure ${target} ...")
+
     # general
 
     project_build_option(${target} UNIX COMPILE CXX FALSE -Os)
@@ -113,6 +109,17 @@ foreach(target IN ITEMS ${PRS_TARGETS})
     project_build_option(${target} MSVC COMPILE CXX TRUE  /permissive-)
     project_build_option(${target} MSVC COMPILE CXX FALSE /Os)
     project_build_option(${target} MSVC COMPILE CXX FALSE /bigobj)
+
+    # misc
+
+    project_build_option(${target} MSVC COMPILE CXX FALSE /MT)
+    project_build_option(${target} MSVC LINKING CXX FALSE /OPT:REF)
+
+    # skip flags below for targets with generated code
+    get_target_property(tmp ${target} ANTLR_LIBRARY)
+    if( ${tmp} )
+        continue()
+    endif()
 
     # warnings
 
@@ -132,14 +139,7 @@ foreach(target IN ITEMS ${PRS_TARGETS})
 
     project_build_option(${target} UNIX COMPILE CXX FALSE -Werror)
 
-    # misc
-
-    project_build_option(${target} MSVC COMPILE CXX FALSE /MT)
-    project_build_option(${target} MSVC LINKING CXX FALSE /OPT:REF)
 endforeach()
-
-project_build_option(${PRS_LIB_SSL} UNIX COMPILE CXX FALSE -Wno-shadow)
-project_build_option(${PRS_LIB_SSL} UNIX COMPILE CXX FALSE -Wno-effc++)
 
 #
 # Generate targets running tests

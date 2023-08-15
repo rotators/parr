@@ -12,7 +12,7 @@ namespace prs
     public:
         base() = default;
         virtual ~base() = default;
-        
+
         virtual antlr4::Lexer* GetLexer() = 0;
         virtual antlr4::CommonTokenStream* GetTokens() = 0;
         virtual antlr4::Parser* GetParser() = 0;
@@ -37,7 +37,7 @@ namespace prs
             return &Lexer;
         }
 
-        virtual antlr4::CommonTokenStream* GetTokens()
+        virtual antlr4::CommonTokenStream* GetTokens() override
         {
             return &Tokens;
         }
