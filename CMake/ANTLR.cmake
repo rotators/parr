@@ -21,14 +21,14 @@ function(project_antlr_library namespace lib grammar jar)
     # find java
     #
 
-    find_package(Java REQUIRED COMPONENTS Runtime OPTIONAL_COMPONENTS Development)
+    find_package(Java REQUIRED COMPONENTS Runtime )#OPTIONAL_COMPONENTS Development)
 
     #
     # prepare all variables
     #
 
     get_filename_component(jar_dir "${jar}" DIRECTORY)
-    
+
     set(lexer  "${grammar}Lexer" )
     set(parser "${grammar}Parser" )
 
@@ -80,6 +80,7 @@ function(project_antlr_library namespace lib grammar jar)
         endif()
     endforeach()
 
+    set_target_properties(${namespace}.${lib} PROPERTIES ANTLR_LIBRARY TRUE)
     target_include_directories(${namespace}.${lib} SYSTEM PUBLIC "${jar_dir}/${lib}/")
     target_include_directories(${namespace}.${lib} SYSTEM PUBLIC "${CMAKE_CURRENT_LIST_DIR}/Libs/antlr/runtime/Cpp/runtime/src/")
     target_compile_definitions(${namespace}.${lib} PUBLIC "ANTLR4_USE_THREAD_LOCAL_CACHE=1")

@@ -31,7 +31,7 @@ function( add_test_target target command_line extension )
     set( debug FALSE )
 
     # check if enable_testing() was used
-    if( NOT BUILD_TESTING )
+    if( NOT CMAKE_TESTING_ENABLED )
         if(debug)
             message( STATUS "Configuring tests skipped" )
         endif()

@@ -99,10 +99,10 @@ prs_executable(${PRS_BIN_SSL} ssl)
 # https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
 get_property(PRS_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PRS_TARGETS})
-    get_target_property(tmp ${target} ANTLR_LIB)
-#    if("${target}" MATCHES "-generate$" OR "${target}" STREQUAL "antlr4.jar")
-#        continue()
-#    endif()
+    get_target_property(tmp ${target} ANTLR_LIBRARY)
+    if( ${tmp} )
+        continue()
+    endif()
 
     message(STATUS "Configure ${target} ...")
     # general
