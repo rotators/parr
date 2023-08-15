@@ -7,15 +7,15 @@ on:
   - '.github/workflows/CodeQL.yml'
   - 'CMake*'
   - '**.cmake'
-  - '**.cpp'
-  - '**.hpp'
+  - 'Source/**.cpp'
+  - 'Source/**.hpp'
  pull_request:
   paths:
   - '.github/workflows/Build.yml'
   - 'CMake*'
   - '**.cmake'
-  - '**.cpp'
-  - '**.hpp'
+  - 'Source/**.cpp'
+  - 'Source/**.hpp'
  workflow_dispatch:
 
 concurrency:
@@ -35,10 +35,10 @@ jobs:
    fail-fast: false
    matrix:
     cfg:
-    - { os: ubuntu-latest, name: GCC,    cc: gcc,   cxx: g++,     artifacts-dir: parr-linux }
+    - { os: ubuntu-latest, name: GCC,    cc: gcc,   cxx: g++,     artifacts-dir: prs-linux }
     - { os: ubuntu-latest, name: Clang,  cc: clang, cxx: clang++, artifacts-dir: false }
     - { os: windows-2019,  name: VS2019, cc: cl,    cxx: cl,      artifacts-dir: false }
-    - { os: windows-2022,  name: VS2022, cc: cl,    cxx: cl,      artifacts-dir: parr-windows }
+    - { os: windows-2022,  name: VS2022, cc: cl,    cxx: cl,      artifacts-dir: prs-windows }
 
   steps:
 
@@ -55,8 +55,8 @@ jobs:
   - name: Build
     run:  cmake --build Build --config Release
 
-  - name: Test (parrssl)
-    run:  cmake --build Build --config Release --target parrssl-test
+  - name: Test (prs-ssl)
+    run:  cmake --build Build --config Release --target prs-ssl.test
 
   - name: Artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}

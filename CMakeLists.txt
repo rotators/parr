@@ -8,6 +8,7 @@ project(prs
     LANGUAGES CXX
 )
 
+set(CMAKE_BUILD_TYPE             Release)
 set(CMAKE_CXX_STANDARD           20)
 set(CMAKE_CXX_STANDARD_REQUIRED  YES)
 set(CMAKE_CXX_EXTENSIONS         NO)
@@ -164,8 +165,8 @@ if(DEFINED ENV{ARTIFACTS_DIR} AND NOT "$ENV{ARTIFACTS_DIR}" MATCHES "^(|[0-9]+|[
     message(STATUS "Artifacts directory: $ENV{ARTIFACTS_DIR}")
     add_custom_target(artifacts-dir
         ALL
-        COMMENT "Copying artifacts: $ENV{ARTIFACTS_DIR}"
+        COMMENT "Copying artifacts: ${PRS_BIN_SSL} -> $ENV{ARTIFACTS_DIR}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
-        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PRS_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PRS_BIN_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
     )
 endif()
