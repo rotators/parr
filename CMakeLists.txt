@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.18.4 FATAL_ERROR)
 
-project(parr
-    VERSION   0.1
+set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+project(prs
+    VERSION   0.2
     LANGUAGES CXX
 )
 
@@ -10,17 +13,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED  YES)
 set(CMAKE_CXX_EXTENSIONS         NO)
 set(CMAKE_SKIP_INSTALL_RULES     YES)
 
-set(PARR_BIN  ${PROJECT_NAME})
-set(PARR_LIB  ${PARR_BIN}lib)
-set(PARR_SSL  ${PARR_BIN}ssl)
-set(PARR_ABNF ${PARR_BIN}abnf)
+set(PRS_LIB     ${PROJECT_NAME})
+set(PRS_LIB_SSL ${PRS_LIB}.ssl)
+
+set(PRS_BIN      ${PROJECT_NAME})
+set(PRS_BIN_SSL  ${PRS_BIN}-ssl)
 
 macro(install)
 endmacro()
 macro(export)
 endmacro()
 
-# Has to be done very early if CMake directory is submodule
+# Has to be done very early if one of CMake directories is submodule
 if(EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD" AND NOT EXISTS "${PROJECT_SOURCE_DIR}/.git/modules")
     find_package(Git QUIET)
     if(Git_FOUND)
@@ -30,6 +34,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD" AND NOT EXISTS "${PROJECT_SOURCE_DIR
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/Libs/antlr/runtime/Cpp/cmake")
+include(ANTLR)
 include(BuildOption)
 
 #
@@ -43,55 +49,60 @@ add_subdirectory(Libs)
 # Project targets
 #
 
-add_library(${PARR_LIB} STATIC)
-target_sources(${PARR_LIB}
+set(PRS_ANTLR_URL "https://github.com/antlr/website-antlr4/raw/gh-pages/download/antlr-4.13.0-complete.jar")
+set(PRS_ANTLR_DIR "${PROJECT_BINARY_DIR}/ANTLR")
+set(PRS_ANTLR_JAR "${PRS_ANTLR_DIR}/antlr.jar")
+
+project_antlr_download("${PRS_ANTLR_URL}" "${PRS_ANTLR_JAR}")
+project_antlr_library(${PROJECT_NAME} "ssl" "FalloutScript" "${PRS_ANTLR_JAR}") # -> PRS_LIB_SSL
+
+#
+
+add_library(${PRS_LIB} STATIC)
+target_sources(${PRS_LIB}
     PRIVATE
-        ${CMAKE_CURRENT_LIST_FILE}
+        "${CMAKE_CURRENT_LIST_FILE}"
 
-        StaticAssert.cpp
-
-        Parser.cpp
-        Parser.hpp
-        Parser.State.cpp
-
-        Rules.hpp
-
-        ssl/SSL.cpp
-        ssl/SSL.hpp
-        ssl/SSL.Rules.hpp
-        ssl/SSL.abnf.hpp
+        Source/prs.cpp
+        Source/prs.hpp
 )
-target_compile_definitions(${PARR_LIB} PRIVATE PROJECT_VERSION=${PROJECT_VERSION} PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR} PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR} PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH} PROJECT_VERSION_TWEAK=${PROJECT_VERSION_TWEAK})
-target_include_directories(${PARR_LIB} PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
-target_link_libraries(${PARR_LIB} PUBLIC pegtl)
+target_compile_definitions(${PRS_LIB} PRIVATE PROJECT_VERSION=${PROJECT_VERSION} PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR} PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR} PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH} PROJECT_VERSION_TWEAK=${PROJECT_VERSION_TWEAK})
+target_include_directories(${PRS_LIB} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/Source")
+target_link_libraries(${PRS_LIB} PUBLIC ${PROJECT_NAME}+antlr)
 
-add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
-    COMMENT "Generating SSL.abnf header"
-    COMMAND "$<TARGET_FILE:${PARR_ABNF}>" ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf > ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
-    DEPENDS ${PARR_ABNF} ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf
-)
+####
 
-function(parr_executable target)
+#add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
+#    COMMENT "Generating SSL.abnf header"
+#    COMMAND "$<TARGET_FILE:${PRS_ABNF}>" ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf > ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
+#    DEPENDS ${PRS_ABNF} ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf
+#)
+
+function(prs_executable target lib)
     add_executable(${target} "")
     target_sources(${target}
         PRIVATE
-            ${CMAKE_CURRENT_LISTS_FILE}
+            "${CMAKE_CURRENT_LISTS_FILE}"
 
-            executable/${target}.cpp
+            Source/executable/${target}.cpp
+
+            "${PRS_ANTLR_DIR}/${lib}/${PROJECT_NAME}.${lib}.hpp"
     )
+    target_link_libraries(${PRS_BIN_SSL} PRIVATE ${PRS_LIB} ${PROJECT_NAME}.${lib} cxxopts)
 endfunction()
 
-parr_executable(${PARR_ABNF})
-target_link_libraries(${PARR_ABNF} PRIVATE pegtl)
-
-parr_executable(${PARR_SSL})
-target_link_libraries(${PARR_SSL} PRIVATE ${PARR_LIB} cxxopts)
+prs_executable(${PRS_BIN_SSL} ssl)
 
 # https://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html
 # https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically/
 # https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
-get_property(PARR_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
-foreach(target IN ITEMS ${PARR_TARGETS})
+get_property(PRS_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
+foreach(target IN ITEMS ${PRS_TARGETS})
+    get_target_property(tmp ${target} ANTLR_LIB)
+#    if("${target}" MATCHES "-generate$" OR "${target}" STREQUAL "antlr4.jar")
+#        continue()
+#    endif()
+
     message(STATUS "Configure ${target} ...")
     # general
 
@@ -126,6 +137,9 @@ foreach(target IN ITEMS ${PARR_TARGETS})
     project_build_option(${target} MSVC LINKING CXX FALSE /OPT:REF)
 endforeach()
 
+project_build_option(${PRS_LIB_SSL} UNIX COMPILE CXX FALSE -Wno-shadow)
+project_build_option(${PRS_LIB_SSL} UNIX COMPILE CXX FALSE -Wno-effc++)
+
 #
 # Generate targets running tests
 # While they are always generated, they must be started manually
@@ -152,6 +166,6 @@ if(DEFINED ENV{ARTIFACTS_DIR} AND NOT "$ENV{ARTIFACTS_DIR}" MATCHES "^(|[0-9]+|[
         ALL
         COMMENT "Copying artifacts: $ENV{ARTIFACTS_DIR}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
-        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PARR_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${PRS_SSL}>" "${CMAKE_CURRENT_LIST_DIR}/$ENV{ARTIFACTS_DIR}"
     )
 endif()

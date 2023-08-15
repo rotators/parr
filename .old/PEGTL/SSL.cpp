@@ -128,10 +128,6 @@ namespace parr::action::ssl
 
 }  // namespace parr::action::ssl
 
-parr::SSL::SSL() {}
-
-parr::SSL::~SSL() {}
-
 void parr::SSL::Run( const Parser::RunMode& mode, pegtl::string_input<>& input, Parser::State& state )
 {
     run::Run<rule::ssl::GlobalScope, action::ssl::on>( mode, input, state );

@@ -9,8 +9,8 @@ namespace parr
     class SSL : public Parser::Tool
     {
     public:
-        SSL();
-        virtual ~SSL();
+        SSL()          = default;
+        virtual ~SSL() = default;
 
         virtual void Run( const Parser::RunMode& mode, pegtl::string_input<>& input, Parser::State& state ) override;
     };

@@ -1,14 +1,9 @@
+[submodule "antlr"]
+	path = Libs/antlr
+	url = https://github.com/antlr/antlr4.git
+	branch = master
+
 [submodule "cxxopts"]
 	path = Libs/cxxopts
 	url = https://github.com/jarro2783/cxxopts.git
 	branch = master
-
-#[submodule "fmt"]
-#	path = Libs/fmt
-#	url = https://github.com/fmtlib/fmt.git
-#	branch = master
-
-[submodule "pegtl"]
-	path = Libs/pegtl
-	url = https://github.com/taocpp/PEGTL.git
-	branch = main

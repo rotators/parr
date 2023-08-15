@@ -1,0 +1,12 @@
+/* Generated automagically by @PROJECT_NAME@ v@PROJECT_VERSION@ */
+
+#pragma once
+
+#include "@lexer@.h"
+#include "@parser@.h"
+
+namespace @namespace@::@lib@
+{
+    using Lexer  = @namespace@::antlr::@lexer@;
+    using Parser = @namespace@::antlr::@parser@;
+}

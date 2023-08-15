@@ -1,0 +1,3 @@
+/**/ procedure /* comment */ start /**//* another */// comment
+/* comment */ /**/ /* comment */ /*comment*/begin/*comment*/ /* comment *//**/
+/* comment */ end /* comment */ // comment
