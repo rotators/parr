@@ -12,7 +12,7 @@ int main( int argc, char** argv )
 {
     prs::InitExecutable();
 
-    auto options = cxxopts::Options( argv[0], "SSL parser" );
+    auto options = cxxopts::Options( std::filesystem::path( argv[0] ).filename(), "SSL parser" );
     {
         auto add = options.add_options();
 
@@ -22,31 +22,38 @@ int main( int argc, char** argv )
         add( "file", "?", cxxopts::value<std::string>() );
     }
 
-    auto userOptions = options.parse( argc, argv );
-
-    std::string contentName, content;
-
-    if( userOptions.count( "help" ) )
-    {
+    auto usage = [&options]( int status, const std::string& error = {} ) {
+        if( !error.empty() )
+        {
+            std::cout << error << std::endl;
+            std::cout << std::endl;
+        }
         std::cout << options.help() << std::endl;
-        return EXIT_SUCCESS;
-    }
+
+        return status;
+    };
+
+    auto userOptions = options.parse( argc, argv );
+    if( userOptions.count( "help" ) )
+        return usage( EXIT_SUCCESS );
+
+    std::string filename, content;
 
     if( userOptions.count( "file" ) )
-        contentName = userOptions["file"].as<std::string>();
-    else
     {
-        std::cerr << "Missing option: --file" << std::endl;
-        return EXIT_FAILURE;
+        filename = userOptions["file"].as<std::string>();
+
+        if( filename.empty() )
+            return usage( EXIT_FAILURE, "Missing filename for option: --file" );
     }
+    else
+        return usage( EXIT_FAILURE, "Missing option: --file" );
 
-    bool result = true;
+    prs::lib<prs::ssl::Lexer, prs::ssl::Parser> ssl;  //(content, filename);
 
-    prs::lib<prs::ssl::Lexer, prs::ssl::Parser> ssl;  //(content, contentName);
-
-    if( !ssl.LoadFile( contentName ) )
+    if( !ssl.LoadFile( filename ) )
     {
-        std::cerr << "File cannot be loaded: [" << contentName << "]" << std::endl;
+        std::cerr << "File cannot be loaded: [" << filename << "]" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -54,7 +61,7 @@ int main( int argc, char** argv )
     ssl.GetParser()->removeErrorListeners();
     ssl.GetParser()->addErrorListener( &diagnostics );
 
-    result = ssl.Parse( true );
+    bool result = ssl.Parse( true );
 
     return result ? EXIT_SUCCESS : EXIT_FAILURE;
 }
