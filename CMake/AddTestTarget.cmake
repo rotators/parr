@@ -22,19 +22,20 @@ include_guard()
 #
 ## Test properties
 ## Allows setting selected CMake properties to test
-## https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html#properties-on-tests
+## https://cmake.org/cmake/help/3.18/manual/cmake-properties.7.html#properties-on-tests
 #
-# .DISABLED             https://cmake.org/cmake/help/latest/prop_test/DISABLED.html
-# .WILL_FAIL            https://cmake.org/cmake/help/latest/prop_test/WILL_FAIL.html
+# .DISABLED             https://cmake.org/cmake/help/3.18/prop_test/DISABLED.html
+# .WILL_FAIL            https://cmake.org/cmake/help/3.18/prop_test/WILL_FAIL.html
 #
 function( add_test_target target command_line extension )
-    set( debug FALSE )
+    set( debug 0 )
 
     # check if enable_testing() was used
-    if( NOT CMAKE_TESTING_ENABLED )
-        if(debug)
-            message( STATUS "Configuring tests skipped" )
-        endif()
+
+    if( CMAKE_TESTING_ENABLED )
+        message( STATUS "Configuring tests: ${target}" )
+    else()
+        message( STATUS "Configuring tests skipped: ${target}" )
         return()
     endif()
 
@@ -64,34 +65,29 @@ function( add_test_target target command_line extension )
 
         if( debug )
             message( STATUS "Add test... ${name}" )
-            message( STATUS "- file: ${file}" )
+            message( STATUS "- file:     ${file}" )
             message( STATUS "- filename: ${filename}" )
         endif()
 
+        set( show_command_line 0 )
         if( EXISTS "${filename}.COMMAND_LINE" )
             file( READ "${filename}.COMMAND_LINE" test_command_line )
 
             list( APPEND used_files "${filename}.COMMAND_LINE" )
-            if( debug )
-                message( STATUS "- command line: ${test_command_line}" )
-            endif()
+            set( show_command_line TRUE )
         else()
             if( EXISTS "${filename}.COMMAND_LINE_BEFORE" )
+                set( show_command_line TRUE )
                 file( READ "${filename}.COMMAND_LINE_BEFORE" test_command_line_before )
 
                 list( APPEND used_files "${filename}.COMMAND_LINE_BEFORE" )
-                if( debug )
-                    message( STATUS "- command line (before): ${test_command_line_before}" )
-                endif()
             endif()
 
             if( EXISTS "${filename}.COMMAND_LINE_AFTER" )
+                set( show_command_line TRUE )
                 file( READ "${filename}.COMMAND_LINE" test_command_line_after )
 
                 list( APPEND used_files "${filename}.COMMAND_LINE_AFTER" )
-                if( debug )
-                    message( STATUS "- command line (after):  ${test_command_line_after}" )
-                endif()
             endif()
         endif()
 
@@ -99,9 +95,14 @@ function( add_test_target target command_line extension )
         foreach( var IN ITEMS test_command_line test_command_line_before test_command_line_after )
             string( REPLACE "@filename@" "${filename}.${extension}" ${var} "${${var}}" )
         endforeach()
+        string(STRIP "${test_command_line_before} ${test_command_line} ${test_command_line_after}" test_command_line_full )
+
+        if( debug AND show_command_line )
+            message( STATUS "- cmd line: ${test_command_line_full}" )
+        endif()
 
         add_test( NAME "${name}"
-            COMMAND           "$<TARGET_FILE:${target}>" ${test_command_line_before} ${test_command_line} ${test_command_line_after}
+            COMMAND           "$<TARGET_FILE:${target}>" ${test_command_line_full}
 #            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
 
@@ -118,21 +119,17 @@ function( add_test_target target command_line extension )
     endforeach( file )
 
     if( CMAKE_BUILD_TYPE )
-        set( TEST_CONFIG "${CMAKE_BUILD_TYPE}" )
+        set( config "${CMAKE_BUILD_TYPE}" )
     else()
-        set( TEST_CONFIG "Release" )
+        set( config "Release" )
     endif()
 
     add_custom_target( ${target}.test
         DEPENDS           ${target}
-        COMMAND           ${CMAKE_CTEST_COMMAND} --build-config ${TEST_CONFIG} --output-on-failure
+        COMMAND           ${CMAKE_CTEST_COMMAND} --build-config ${config} --output-on-failure
         SOURCES           ${used_files}
     )
 
     source_group( TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${found_tests} )
     source_group( "CMake"     REGULAR_EXPRESSION "[Cc][Mm][Aa][Kk][Ee]" )
-
-    macro( _check_test_property )
-        message(FATAL_ERROR)
-    endmacro()
 endfunction()

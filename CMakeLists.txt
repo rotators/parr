@@ -99,7 +99,7 @@ prs_executable(${PRS_BIN_SSL} ssl)
 # https://learn.microsoft.com/en-us/cpp/build/reference/linker-options/
 get_property(PRS_TARGETS DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" PROPERTY BUILDSYSTEM_TARGETS)
 foreach(target IN ITEMS ${PRS_TARGETS})
-    message(STATUS "Configure ${target} ...")
+    message(STATUS "Configuring build options: ${target}" )
 
     # general
 

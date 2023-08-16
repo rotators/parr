@@ -6,7 +6,13 @@
 	],
 	"settings": {
 		"files.eol": "\n",
-		"C_Cpp.errorSquiggles": "disabled",
-		"cmake.buildDirectory": "${workspaceFolder}/Build"
+		"files.readonlyInclude": {
+			"Libs/antlr*/**": true,
+			"Libs/cxxopts/**": true
+		},
+		"editor.formatOnType": true,
+		"editor.formatOnSave": true,
+		"editor.formatOnPaste": true,
+		"C_Cpp.errorSquiggles": "disabled"
 	}
 }

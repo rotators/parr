@@ -17,7 +17,7 @@ int main( int argc, char** argv )
         auto add = options.add_options();
 
         add( "help", "Usage" );
-        //add( "verbose", "Verbose" );
+        // add( "verbose", "Verbose" );
 
         add( "file", "?", cxxopts::value<std::string>() );
     }
@@ -33,17 +33,7 @@ int main( int argc, char** argv )
     }
 
     if( userOptions.count( "file" ) )
-    {
         contentName = userOptions["file"].as<std::string>();
-
-        if( !std::filesystem::exists( contentName ) )
-        {
-            std::cerr << "File does not exist: [" << contentName << std::string( "]" ) << std::endl;
-            return EXIT_FAILURE;
-        }
-
-        content = prs::LoadFile( contentName );
-    }
     else
     {
         std::cerr << "Missing option: --file" << std::endl;
@@ -52,13 +42,19 @@ int main( int argc, char** argv )
 
     bool result = true;
 
-    prs::lib<prs::ssl::Lexer, prs::ssl::Parser> ssl(content, contentName);
+    prs::lib<prs::ssl::Lexer, prs::ssl::Parser> ssl;  //(content, contentName);
+
+    if( !ssl.LoadFile( contentName ) )
+    {
+        std::cerr << "File cannot be loaded: [" << contentName << "]" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     antlr4::DiagnosticErrorListener diagnostics;
-    ssl.Parser.removeErrorListeners();
-    ssl.Parser.addErrorListener(&diagnostics);
+    ssl.GetParser()->removeErrorListeners();
+    ssl.GetParser()->addErrorListener( &diagnostics );
 
-    result = prs::Parse(ssl, true);
+    result = ssl.Parse( true );
 
     return result ? EXIT_SUCCESS : EXIT_FAILURE;
 }
