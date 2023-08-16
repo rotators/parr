@@ -8,7 +8,7 @@ updates:
   schedule:
    interval: "monthly"
 
-- package-ecosystem: "gitsubmodules"
+- package-ecosystem: "gitsubmodule"
   directory: "/"
   schedule:
    interval: "monthly"
