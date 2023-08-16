@@ -12,7 +12,7 @@ int main( int argc, char** argv )
 {
     prs::InitExecutable();
 
-    auto options = cxxopts::Options( std::filesystem::path( argv[0] ).filename(), "SSL parser" );
+    auto options = cxxopts::Options( std::filesystem::path( argv[0] ).filename().string(), "SSL parser" );
     {
         auto add = options.add_options();
 
