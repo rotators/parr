@@ -5,22 +5,29 @@ on:
   paths:
   - '.github/workflows/Build.yml'
   - '.github/workflows/CodeQL.yml'
-  - 'CMake*'
-  - '**.cmake'
+  - 'CMake**'
+  - 'Libs/*'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
+  - 'Test/*/'
+  - '**.cmake'
+  - '**.g4'
  pull_request:
   paths:
   - '.github/workflows/Build.yml'
-  - 'CMake*'
-  - '**.cmake'
+  - '.github/workflows/CodeQL.yml'
+  - 'CMake**'
+  - 'Libs/*'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
+  - 'Test/*/'
+  - '**.cmake'
+  - '**.g4'
  workflow_dispatch:
 
 concurrency:
-  group:              ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+ group:              ${{ github.workflow }}-${{ github.ref }}
+ cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 defaults:
  run:
