@@ -9,7 +9,7 @@ on:
   - 'Libs/*'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
-  - 'Test/*/'
+  - 'Test/*/**'
   - '**.cmake'
   - '**.g4'
  pull_request:
@@ -20,7 +20,7 @@ on:
   - 'Libs/*'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
-  - 'Test/*/'
+  - 'Test/*/**'
   - '**.cmake'
   - '**.g4'
  workflow_dispatch:
