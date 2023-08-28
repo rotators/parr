@@ -24,6 +24,11 @@ jobs:
      name: prs-linux
      path: Build
 
+  # upload-artifact/download-artifact breaks file permissions
+  - name: Restore artifact permissions
+    if:   runner.os != 'Windows'
+    run:  chmod +x Build/prs-*
+
   - name: Check artifact
     run:  Build/prs-ssl --help
 
