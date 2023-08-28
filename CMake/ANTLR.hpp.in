@@ -4,9 +4,13 @@
 
 #include "@lexer@.h"
 #include "@parser@.h"
+@listener_cpp@#include "@parser@BaseListener.h"
+@visitor_cpp@#include "@parser@BaseVisitor.h"
 
 namespace @namespace@::@lib@
 {
-    using Lexer  = @namespace@::antlr::@lexer@;
-    using Parser = @namespace@::antlr::@parser@;
+    using Lexer    = @namespace@::antlr::@lexer@;
+    using Parser   = @namespace@::antlr::@parser@;
+    @listener_cpp@using Listener = @namespace@::antlr::@parser@BaseListener;
+    @visitor_cpp@using Visitor  = @namespace@::antlr::@parser@BaseVisitor;
 }

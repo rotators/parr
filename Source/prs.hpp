@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include <antlr4-runtime.h>
 
@@ -9,23 +10,42 @@ namespace prs
 {
     class base
     {
-    public:
-        base()          = default;
-        virtual ~base() = default;
+    private:
+        antlr4::tree::ParseTree* LastParseTree = nullptr;
+        bool                     NeedFill      = true;
 
     public:
+        base()              = default;
+        base( const base& ) = delete;
+        base( base&& )      = delete;
+        virtual ~base()     = default;
+
+        base& operator=( const base& ) = delete;
+        base& operator=( base&& )      = delete;
+
+    public:  // lib
         virtual antlr4::ANTLRInputStream*  GetInput()  = 0;
         virtual antlr4::Lexer*             GetLexer()  = 0;
         virtual antlr4::CommonTokenStream* GetTokens() = 0;
         virtual antlr4::Parser*            GetParser() = 0;
-        virtual void                       RunParser() = 0;
+        virtual antlr4::tree::ParseTree*   RunParser() = 0;
 
-    public:
+    public:  // files
         bool LoadFile( const std::string& filename );
         void UnloadFile();
 
-        bool Parse( bool trace = false, antlr4::atn::PredictionMode mode = antlr4::atn::PredictionMode::SLL );
-        bool ParseAdaptive( bool trace = false );
+    public:  // work
+        bool Parse( antlr4::atn::PredictionMode mode = antlr4::atn::PredictionMode::LL );
+        bool ParseAdaptive();
+
+    public:  // diagnostics
+        antlr4::tree::ParseTree* GetLastParseTree();
+        std::vector<std::string> GetTokensVec( bool full = false, bool insertSpace = false, bool insertNewline = false );
+        void                     PrintTokens( bool full = false );
+        void                     PrintTrace( const std::string& prefix, const std::string& message );
+
+    protected:
+        void PrintTrace( const std::string& message );
     };
 
     template<typename LexerType, typename ParserType>
@@ -46,10 +66,10 @@ namespace prs
         virtual LexerType*                 GetLexer() override { return &Lexer; }
         virtual antlr4::CommonTokenStream* GetTokens() override { return &Tokens; }
         virtual ParserType*                GetParser() override { return &Parser; }
-        virtual void                       RunParser() override { Parser.prs(); }
+        virtual antlr4::tree::ParseTree*   RunParser() override { return Parser.prs(); }
     };
 
-    void InitExecutable();
+    // utils
 
     bool LoadFile( const std::string& filename, std::string& content );
 }  // namespace prs

@@ -15,10 +15,12 @@ set(CMAKE_CXX_EXTENSIONS         NO)
 set(CMAKE_SKIP_INSTALL_RULES     YES)
 
 set(PRS_LIB     ${PROJECT_NAME})
+set(PRS_LIB_BIN ${PRS_LIB}.executable)
 set(PRS_LIB_SSL ${PRS_LIB}.ssl)
 
-set(PRS_BIN      ${PROJECT_NAME})
-set(PRS_BIN_SSL  ${PRS_BIN}-ssl)
+set(PRS_BIN           ${PROJECT_NAME})
+set(PRS_BIN_PROCESSOR ${PRS_BIN}-processor)
+set(PRS_BIN_SSL       ${PRS_BIN}-ssl)
 
 macro(install)
 endmacro()
@@ -35,7 +37,6 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/.git/HEAD" AND NOT EXISTS "${PROJECT_SOURCE_DIR
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/Libs/antlr/runtime/Cpp/cmake")
 include(ANTLR)
 include(BuildOption)
 
@@ -55,7 +56,8 @@ set(PRS_ANTLR_DIR "${PROJECT_BINARY_DIR}/ANTLR")
 set(PRS_ANTLR_JAR "${PRS_ANTLR_DIR}/antlr.jar")
 
 project_antlr_download("${PRS_ANTLR_URL}" "${PRS_ANTLR_JAR}")
-project_antlr_library(${PROJECT_NAME} "ssl" "FalloutScript" "${PRS_ANTLR_JAR}") # -> PRS_LIB_SSL
+project_antlr_library(${PROJECT_NAME} "processor" "Processor" "${PRS_ANTLR_JAR}") # -> PRS_LIB_PROCESSOR
+project_antlr_library(${PROJECT_NAME} "ssl" "FalloutScript" "${PRS_ANTLR_JAR}")   # -> PRS_LIB_SSL
 
 #
 
@@ -71,6 +73,17 @@ target_compile_definitions(${PRS_LIB} PRIVATE PROJECT_VERSION=${PROJECT_VERSION}
 target_include_directories(${PRS_LIB} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/Source")
 target_link_libraries(${PRS_LIB} PUBLIC ${PROJECT_NAME}+antlr)
 
+add_library(${PRS_LIB_BIN} STATIC)
+target_sources(${PRS_LIB_BIN}
+    PRIVATE
+        "${CMAKE_CURRENT_LIST_FILE}"
+
+        Source/executable/executable.cpp
+        Source/executable/executable.cpp
+)
+target_include_directories(${PRS_LIB_BIN} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/Source/executable")
+target_link_libraries(${PRS_LIB_BIN} PUBLIC ${PRS_LIB} cxxopts)
+
 ####
 
 #add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/ssl/SSL.abnf.hpp
@@ -80,18 +93,24 @@ target_link_libraries(${PRS_LIB} PUBLIC ${PROJECT_NAME}+antlr)
 #)
 
 function(prs_executable target lib)
+    if( NOT EXISTS "${PROJECT_SOURCE_DIR}/Source/executable/${target}.cpp" )
+        message( AUTHOR_WARNING "Main source for target \"${target}\" does not exist\n${PROJECT_SOURCE_DIR}/Source/executable/${target}.cpp" )
+        return()
+    endif()
+
     add_executable(${target} "")
     target_sources(${target}
         PRIVATE
             "${CMAKE_CURRENT_LISTS_FILE}"
 
-            Source/executable/${target}.cpp
+             Source/executable/${target}.cpp
 
-            "${PRS_ANTLR_DIR}/${lib}/${PROJECT_NAME}.${lib}.hpp"
+            "${PRS_ANTLR_DIR}/${lib}/cpp/${PROJECT_NAME}.${lib}.hpp"
     )
-    target_link_libraries(${PRS_BIN_SSL} PRIVATE ${PRS_LIB} ${PROJECT_NAME}.${lib} cxxopts)
+    target_link_libraries(${target} PRIVATE ${PRS_LIB_BIN} ${PROJECT_NAME}.${lib})
 endfunction()
 
+prs_executable(${PRS_BIN_PROCESSOR} processor)
 prs_executable(${PRS_BIN_SSL} ssl)
 
 # https://gcc.gnu.org/onlinedocs/gcc/Option-Summary.html
@@ -114,6 +133,14 @@ foreach(target IN ITEMS ${PRS_TARGETS})
 
     project_build_option(${target} MSVC COMPILE CXX FALSE /MT)
     project_build_option(${target} MSVC LINKING CXX FALSE /OPT:REF)
+
+    # cygwin
+
+    if(CYGWIN)
+        project_build_option(${target} TRUE LINKING CXX TRUE -static)
+        project_build_option(${target} TRUE LINKING CXX TRUE -static-libgcc)
+        project_build_option(${target} TRUE LINKING CXX TRUE -static-libstdc++)
+    endif()
 
     # skip flags below for targets with generated code
     get_target_property(tmp ${target} ANTLR_LIBRARY)
@@ -147,6 +174,20 @@ endforeach()
 #
 
 add_subdirectory(Test)
+
+#
+# cygwin1.dll
+# Static executables still require .dll to run outside of Cygwin shell
+#
+
+if(CYGWIN)
+    find_program(PRS_CYGWIN1_PATH cygwin1.dll REQUIRED)
+    get_filename_component(PRS_CYGWIN1_NAME "${PRS_CYGWIN1_PATH}" NAME)
+    if(NOT EXISTS "${PROJECT_BINARY_DIR}/${PRS_CYGWIN1_NAME}")
+        message(STATUS "Copying ${PRS_CYGWIN1_NAME}")
+        file(COPY "${PRS_CYGWIN1_PATH}" DESTINATION "${PROJECT_BINARY_DIR}")
+    endif()
+endif()
 
 #
 # Add build directory to git ignores list

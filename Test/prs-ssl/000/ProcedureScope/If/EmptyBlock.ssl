@@ -1,6 +1,6 @@
 procedure name
 begin
-  if 2 + 2 == 4 then
+  if true then
   begin
   end
 end

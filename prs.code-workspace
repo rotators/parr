@@ -1,18 +1,23 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"files.eol": "\n",
-		"files.readonlyInclude": {
-			"Libs/antlr*/**": true,
-			"Libs/cxxopts/**": true
-		},
-		"editor.formatOnType": true,
-		"editor.formatOnSave": true,
-		"editor.formatOnPaste": true,
-		"C_Cpp.errorSquiggles": "disabled"
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.eol": "\n",
+        "files.readonlyInclude": {
+            "Libs/antlr*/**": true,
+            "Libs/cxxopts/**": true
+        },
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+        "[antlr]": {
+            "editor.formatOnType": false,
+            "editor.formatOnSave": false,
+            "editor.formatOnPaste": false
+        },
+        "C_Cpp.errorSquiggles": "disabled"
+    }
 }

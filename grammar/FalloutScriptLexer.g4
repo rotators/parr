@@ -3,10 +3,12 @@ lexer grammar FalloutScriptLexer;
 BEGIN     : 'begin' ;
 DO        : 'do' ;
 END       : 'end' ;
+FALSE     : 'false' ;
 IF        : 'if' ;
 IMPORT    : 'import' ;
 PROCEDURE : 'procedure' ;
 THEN      : 'then' ;
+TRUE      : 'true' ;
 VARIABLE  : 'variable' ;
 WHILE     : 'while' ;
 

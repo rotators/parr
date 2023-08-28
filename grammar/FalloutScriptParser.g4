@@ -77,8 +77,14 @@ variableHead : VARIABLE blank+ name=IDENTIFIER;
 
 //
 
+ifCondition
+    : bool=(TRUE | FALSE)
+    | name=IDENTIFIER
+    ;
+//
+
 blockHead
-    : IF blank* PAREN_OPEN? .+? PAREN_CLOSE? blank* THEN # blockkHeadIf // WIP
+    : IF blank* PAREN_OPEN? ifCondition PAREN_CLOSE? blank* THEN # blockkHeadIf // WIP
     ;
 
 blockBody
