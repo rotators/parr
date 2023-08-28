@@ -11,7 +11,13 @@ namespace prs::executable
 {
     void Init( int argc, char** argv, const std::string& program );
 
+// TODO: clang installed on GHA runners cannot use std::source_location (v16.x required)
+#if defined( __cpp_lib_source_location )
     void Boop( const std::string& message = {}, std::source_location src = std::source_location::current() );
+#else
+    void Boop( const std::string& message = {} );
+#endif
+
     void Notice( const std::string& message );
     void Warning( const std::string& message );
     void Error( const std::string& message );

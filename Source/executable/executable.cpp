@@ -3,6 +3,8 @@
 
 #include "executable.hpp"
 
+using namespace std::string_literals;
+
 namespace
 {
     const std::string OptionHelp = "help";
@@ -66,16 +68,28 @@ void prs::executable::Init( int argc, char** argv, const std::string& program )
     Options.add_options()( OptionHelp, "Usage" );
 }
 
+// TODO: clang installed on GHA runners cannot use std::source_location (v16.x required)
+#if defined( __cpp_lib_source_location )
 void prs::executable::Boop( const std::string& message /* = {} */, std::source_location src /* = std::source_location::current() */ )
 {
-    std::string messageFull;
-    messageFull += messageFull + "[" + src.file_name() + ":" + std::to_string( src.line() ) /* + ":" + std::to_string( src.column() ) */ + "]" + "[" + src.function_name() + "]";
+    std::string messageFull = "["s + src.file_name() + ":" + std::to_string( src.line() ) /* + ":" + std::to_string( src.column() ) */ + "]" + "[" + src.function_name() + "]";
 
     if( !message.empty() )
         messageFull += " " + message;
 
     Message( "Boop", messageFull );
 }
+#else
+void prs::executable::Boop( const std::string& message /* = {} */ )
+{
+    std::string messageFull = "[UnknownFile:0][UnknownFunction()]";
+
+    if( !message.empty() )
+        messageFull += " " + message;
+
+    Message( "Boop", messageFull );
+}
+#endif
 
 void prs::executable::Notice( const std::string& message )
 {
