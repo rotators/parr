@@ -45,7 +45,7 @@ function( add_test_target target command_line extension )
 
     # check if enable_testing() was used
     if( CMAKE_TESTING_ENABLED )
-        # TODO: DEFER CALL (cmake v3.19+)
+        # TODO: DEFER CALL (cmake v3.19)
         cmake_language( CALL ${CMAKE_CURRENT_FUNCTION}.help )
         message( STATUS "Configuring tests: ${target}" )
     else()
@@ -227,10 +227,16 @@ function( add_test_target target command_line extension )
         cmake_language( CALL ${CMAKE_CURRENT_FUNCTION}.debug "- target_used_files ${file}" )
     endforeach()
 
+    if( CMAKE_BUILD_TYPE )
+        set( build_type "${CMAKE_BUILD_TYPE}" )
+    else()
+        set( build_type "Release" )
+    endif()
+
     add_custom_target( ${CMAKE_CURRENT_FUNCTION}.run.${target}
         SOURCES  ${target_used_files}
         DEPENDS  ${target}
-        COMMAND  "${CMAKE_CTEST_COMMAND}" --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}::${target}$
+        COMMAND  "${CMAKE_CTEST_COMMAND}" --build-config ${build_type} --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}::${target}$
     )
 
     add_custom_command(
