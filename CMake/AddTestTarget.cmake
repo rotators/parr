@@ -270,10 +270,16 @@ function( add_test_target.help )
     set( help_targets    "${CMAKE_CURRENT_FUNCTION}.targets" )
     set( help_extensions "${CMAKE_CURRENT_FUNCTION}.extension" )
 
+    if( CMAKE_BUILD_TYPE )
+        set( build_type "${CMAKE_BUILD_TYPE}" )
+    else()
+        set( build_type "Release" )
+    endif()
+
     # generic targets which run ctest with partial primary label
     set( help.run.all   "Run all tests added by ${main_function}() function" )
     add_custom_target( ${main_function}.run.all
-        COMMAND  "${CMAKE_CTEST_COMMAND}" --output-on-failure --label-regex ^${main_function}::
+        COMMAND  "${CMAKE_CTEST_COMMAND}" --build-config ${build_type} --output-on-failure --label-regex ^${main_function}::
     )
 
     # generic targets which run ctest with full secondary label
@@ -282,7 +288,7 @@ function( add_test_target.help )
     set( help.only.must-fail    "Run all enabled tests with WILL_FAIL property" )
     foreach( suffix IN ITEMS command-line must-pass must-fail )
         add_custom_target( ${main_function}.only.${suffix}
-            COMMAND  "${CMAKE_CTEST_COMMAND}" --output-on-failure --label-regex ^${main_function}:${suffix}$
+            COMMAND  "${CMAKE_CTEST_COMMAND}" --build-config ${build_type} --output-on-failure --label-regex ^${main_function}:${suffix}$
         )
     endforeach()
 
@@ -292,7 +298,7 @@ function( add_test_target.help )
     foreach( suffix IN ITEMS show.targets.gha show.labels )
         set( call "${main_function}.script.${suffix}" )
         add_custom_target( ${main_function}.${suffix}
-            COMMAND  ${CMAKE_COMMAND} -DCALL="${call}" -P "${CMAKE_CURRENT_FUNCTION_LIST_FILE}"
+            COMMAND  "${CMAKE_COMMAND}" -DCALL="${call}" -P "${CMAKE_CURRENT_FUNCTION_LIST_FILE}"
         )
     endforeach()
 
@@ -370,7 +376,7 @@ function( add_test_target.help )
         add_custom_command(
             OUTPUT "${check_self}"
             COMMAND "${CMAKE_COMMAND}" -E echo "Checking target: ${target}"
-            COMMAND "${CMAKE_COMMAND}" --build "${PROJECT_BINARY_DIR}" --target "${target}"
+            COMMAND "${CMAKE_COMMAND}" --build "${PROJECT_BINARY_DIR}" --config ${build_type} --target "${target}"
             APPEND
         )
     endforeach()
