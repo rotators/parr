@@ -1,0 +1,34 @@
+name: Test
+
+on: workflow_call
+
+jobs:
+
+ Config:
+  runs-on: 'ubuntu-latest'
+
+  steps:
+
+  # NOTES
+  # - current tests runner: ctest (handled by CMake/AddTestTarget.cmake)
+
+  - name: Clone repository
+    uses: actions/checkout@v3
+
+  - name: Build configuration
+    run:  cmake -B Build
+
+  - name: Download artifact
+    uses: actions/download-artifact@v3
+    with:
+     name: prs-linux
+     path: Build
+
+  - name: Check artifact
+    run:  Build/prs-ssl --help
+
+  - name: Check tests runner (show.labels)
+    run:  cmake --build Build --config Release --target add_test_target.show.labels
+
+  - name: Check tests runner (only.extension.t)
+    run:  cmake --build Build --config Release --target add_test_target.only.extension.t

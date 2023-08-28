@@ -5,22 +5,24 @@ on:
   paths:
   - '.github/workflows/Build.yml'
   - '.github/workflows/CodeQL.yml'
+  - '.github/workflows/Test.yml'
   - 'CMake**'
-  - 'Libs/*'
+  - 'Libs/**'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
-  - 'Test/*/**'
+  - 'Test/**'
   - '**.cmake'
   - '**.g4'
  pull_request:
   paths:
   - '.github/workflows/Build.yml'
   - '.github/workflows/CodeQL.yml'
+  - '.github/workflows/Test.yml'
   - 'CMake**'
-  - 'Libs/*'
+  - 'Libs/**'
   - 'Source/**.cpp'
   - 'Source/**.hpp'
-  - 'Test/*/**'
+  - 'Test/**'
   - '**.cmake'
   - '**.g4'
  workflow_dispatch:
@@ -69,25 +71,6 @@ jobs:
   - name: Build
     run:  cmake --build Build --config Release
 
-  - name: Test (prs-ssl)
-    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl
-
-  - name: Test (.help)
-    if:   runner.os == 'Windows'
-    run:  cmake --build Build --config Release --target add_test_target.help
-
-  - name: Test (.show.labels)
-    if:   runner.os == 'Windows'
-    run:  cmake --build Build --config Release --target add_test_target.show.labels
-
-  - name: Test (.check)
-    if:   runner.os == 'Windows'
-    run:  cmake --build Build --config Release --target add_test_target.check
-
-  - name: Test (.run.prs-ssl)
-    if:   runner.os == 'Windows'
-    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl
-
   - name: Artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}
     uses: actions/upload-artifact@v3
@@ -98,6 +81,11 @@ jobs:
      if-no-files-found: error
 
  # note to self: GitHub UI ignores reusable workflow name and uses job name below instead
+
+ Test:
+  needs: Build
+  uses:  ./.github/workflows/Test.yml
+
  CodeQL:
   needs: Build
   uses:  ./.github/workflows/CodeQL.yml

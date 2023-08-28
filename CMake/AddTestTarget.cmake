@@ -44,12 +44,20 @@ function( add_test_target target command_line extension )
     endif()
 
     # check if enable_testing() was used
+    set( skip " (skipped)" )
     if( CMAKE_TESTING_ENABLED )
         # TODO: DEFER CALL (cmake v3.19)
-        cmake_language( CALL ${CMAKE_CURRENT_FUNCTION}.help )
-        message( STATUS "Configuring tests: ${target}" )
-    else()
-        message( STATUS "Configuring tests skipped: ${target}" )
+        if( TODO AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.19 )
+            cmake_language( DEFER CALL ${CMAKE_CURRENT_FUNCTION}.help DEFER )
+        else()
+            cmake_language( CALL ${CMAKE_CURRENT_FUNCTION}.help LEGACY )
+        endif()
+        unset( skip )
+    endif()
+
+    message( STATUS "Configuring tests: ${target}${skip}" )
+
+    if( NOT CMAKE_TESTING_ENABLED )
         return()
     endif()
 
@@ -216,7 +224,7 @@ function( add_test_target target command_line extension )
         if( NOT TARGET ${CMAKE_CURRENT_FUNCTION}.only.extension.${test_file_ext} )
             add_custom_target( ${CMAKE_CURRENT_FUNCTION}.only.extension.${test_file_ext}
                 DEPENDS  ${target}
-                COMMAND  ${CMAKE_CTEST_COMMAND} --build-config ${build_type} --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}:extension:${test_file_ext}$
+                COMMAND  "${CMAKE_CTEST_COMMAND}" --build-config ${build_type} --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}:extension:${test_file_ext}$
             )
 
             add_custom_command(
@@ -250,7 +258,7 @@ function( add_test_target target command_line extension )
 endfunction()
 
 function( add_test_target.debug message )
-    set( debug 1 )
+    set( debug 0 )
 
     if( debug )
         message( STATUS "${message}" )
@@ -261,8 +269,11 @@ endfunction()
 # Overengineered help screen
 #
 
-function( add_test_target.help )
+function( add_test_target.help mode )
     if( TARGET ${CMAKE_CURRENT_FUNCTION} )
+        return()
+    elseif( NOT "${mode}" STREQUAL "LEGACY" AND NOT "${mode}" STREQUAL "DEFER" )
+        message( FATAL_ERROR "Unknown mode\n${mode}" )
         return()
     endif()
 
@@ -304,7 +315,7 @@ function( add_test_target.help )
     foreach( suffix IN ITEMS show.targets.gha show.labels )
         set( call "${main_function}.script.${suffix}" )
         add_custom_target( ${main_function}.${suffix}
-            COMMAND  "${CMAKE_COMMAND}" -DCALL="${call}" -P "${CMAKE_CURRENT_FUNCTION_LIST_FILE}"
+            COMMAND  "${CMAKE_COMMAND}" -DCALL="${call}" -DCFG="${build_type}" -P "${CMAKE_CURRENT_FUNCTION_LIST_FILE}"
         )
     endforeach()
 
@@ -396,7 +407,7 @@ if( NOT CMAKE_ARGC )
     return()
 endif()
 
-foreach( name IN ITEMS CALL )
+foreach( name IN ITEMS CALL CFG )
     if( NOT ${name} )
         message( FATAL_ERROR "Required internal variable ${name} not set" )
         return()
@@ -408,7 +419,7 @@ endforeach()
 function( add_test_target.LABELS var )
     string( REGEX REPLACE "\\..+" "" main_function "${CMAKE_CURRENT_FUNCTION}" )
     execute_process(
-        COMMAND         ${CMAKE_CTEST_COMMAND} --test-dir "${CMAKE_CURRENT_BINARY_DIR}" --print-labels
+        COMMAND         "${CMAKE_CTEST_COMMAND}" --build-config "${CFG}" --test-dir "${CMAKE_CURRENT_BINARY_DIR}" --print-labels
         OUTPUT_VARIABLE output
     )
 
