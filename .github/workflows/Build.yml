@@ -70,7 +70,7 @@ jobs:
     run:  cmake --build Build --config Release
 
   - name: Test (prs-ssl)
-    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl
+    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl --verbose
 
   - name: Artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}

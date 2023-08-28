@@ -244,7 +244,7 @@ function( add_test_target target command_line extension )
 endfunction()
 
 function( add_test_target.debug message )
-    set( debug 0 )
+    set( debug 1 )
 
     if( debug )
         message( STATUS "${message}" )
