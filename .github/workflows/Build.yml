@@ -70,23 +70,23 @@ jobs:
     run:  cmake --build Build --config Release
 
   - name: Test (prs-ssl)
-    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl --verbose
+    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl
 
   - name: Test (.help)
     if:   runner.os == 'Windows'
-    run:  cmake --build Build --target add_test_target.help
+    run:  cmake --build Build --config Release --target add_test_target.help
 
   - name: Test (.show.labels)
     if:   runner.os == 'Windows'
-    run:  cmake --build Build --target add_test_target.show.labels
+    run:  cmake --build Build --config Release --target add_test_target.show.labels
 
   - name: Test (.check)
     if:   runner.os == 'Windows'
-    run:  cmake --build Build --target add_test_target.check
+    run:  cmake --build Build --config Release --target add_test_target.check
 
   - name: Test (.run.prs-ssl)
     if:   runner.os == 'Windows'
-    run:  cmake --build Build --target add_test_target.run.prs-ssl --verbose
+    run:  cmake --build Build --config Release --target add_test_target.run.prs-ssl
 
   - name: Artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}

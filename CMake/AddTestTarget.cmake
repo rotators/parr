@@ -86,6 +86,12 @@ function( add_test_target target command_line extension )
     endforeach()
     list( SORT found_tests )
 
+    if( CMAKE_BUILD_TYPE )
+        set( build_type "${CMAKE_BUILD_TYPE}" )
+    else()
+        set( build_type "Release" )
+    endif()
+
     foreach( test_file IN LISTS found_tests )
         # reset variables holding test-specific data
         unset( test_used_files )
@@ -210,7 +216,7 @@ function( add_test_target target command_line extension )
         if( NOT TARGET ${CMAKE_CURRENT_FUNCTION}.only.extension.${test_file_ext} )
             add_custom_target( ${CMAKE_CURRENT_FUNCTION}.only.extension.${test_file_ext}
                 DEPENDS  ${target}
-                COMMAND  ${CMAKE_CTEST_COMMAND} --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}:extension:${test_file_ext}$
+                COMMAND  ${CMAKE_CTEST_COMMAND} --build-config ${build_type} --output-on-failure --label-regex ^${CMAKE_CURRENT_FUNCTION}:extension:${test_file_ext}$
             )
 
             add_custom_command(
@@ -226,12 +232,6 @@ function( add_test_target target command_line extension )
     foreach( file IN LISTS target_used_files )
         cmake_language( CALL ${CMAKE_CURRENT_FUNCTION}.debug "- target_used_files ${file}" )
     endforeach()
-
-    if( CMAKE_BUILD_TYPE )
-        set( build_type "${CMAKE_BUILD_TYPE}" )
-    else()
-        set( build_type "Release" )
-    endif()
 
     add_custom_target( ${CMAKE_CURRENT_FUNCTION}.run.${target}
         SOURCES  ${target_used_files}
