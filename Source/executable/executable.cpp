@@ -21,6 +21,14 @@ namespace
     int    ArgC;
     char** ArgV;
 
+    void Message( const std::string& message )
+    {
+        if( message.empty() )
+            return;
+
+        std::cout << message << std::endl;
+    }
+
     void Message( const std::string& type, const std::string& message )
     {
         if( type.empty() || message.empty() )
@@ -32,7 +40,6 @@ namespace
             space = "";
 
         std::cout << "[" << type << "]" << space << message << std::endl;
-        std::cout << std::endl;
     }
 
     [[noreturn]] void ExitError( int status, const std::string& message = {}, const std::string& messageEx = {} )
@@ -137,11 +144,14 @@ cxxopts::ParseResult& prs::executable::options::GetParsed()
 {
     if( !OptionsParsedAlready )
     {
-        OptionsParsed        = Options.parse( ArgC, ArgV );
+        OptionsParsed        = Get().parse( ArgC, ArgV );
         OptionsParsedAlready = true;
 
         if( OptionsParsed.count( OptionHelp ) )
+        {
+            Message( Get().help() );
             ExitError( EXIT_SUCCESS );
+        }
     }
 
     return OptionsParsed;
@@ -176,7 +186,7 @@ std::string prs::executable::options::File()
 
 void prs::executable::options::AddGroupDiagnostics()
 {
-    auto option = Options.add_options( "Diagnostics" );
+    auto option = Get().add_options( "Diagnostics" );
     option( OptionTokens, "Tokens", cxxopts::value<std::string>()->implicit_value( "" ) );
     option( OptionTrace, "Trace" );
     option( OptionTree, "Tree" );
