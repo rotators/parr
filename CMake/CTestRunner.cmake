@@ -47,7 +47,7 @@ set( CTestRunner.ConfigOptions Disabled SkipDependencies )
 foreach( option IN LISTS CTestRunner.Config )
     if( NOT option IN_LIST CTestRunner.ConfigOptions )
         list( JOIN CTestRunner.ConfigOptions ", " tmp )
-        message( FATAL_ERROR "Unknown CTestRuner.Config option\n${option}\nAll known options: ${tmp}" )
+        message( FATAL_ERROR "Unknown CTestRuner.Config option\noption = \"${option}\"\nAll known options: ${tmp}" )
         return()
     endif()
     string( REGEX REPLACE "([A-Z])" " \\1" tmp "${option}" )
@@ -67,7 +67,7 @@ elseif( NOT "${CTestRunner.FunctionName}" MATCHES "^[A-Za-z][A-Za-z0-9_]*$" )
     message( FATAL_ERROR "Global variable invalid\nCTestRunner.FunctionName = '${CTestRunner.FunctionName}'" )
     return()
 else()
-    message( STATUS "Configuring tests runner... function: ${CTestRunner.FunctionName}()" )
+    message( STATUS "Configuring CTestRunner... function: ${CTestRunner.FunctionName}()" )
 endif()
 
 function( ${CTestRunner.FunctionName} target command_line extension ... )
@@ -75,7 +75,7 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
 
     # check if target is valid
     if( NOT TARGET ${target} )
-        message( AUTHOR_WARNING "Target does not exist, ignored\n$target = \"${target}\"" )
+        message( AUTHOR_WARNING "Target does not exist, ignored\ntarget = \"${target}\"" )
         return()
     endif()
 
@@ -415,10 +415,10 @@ function( ${CTestRunner.FunctionName}.postconfig )
 
     cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_OTHER   "Other targets" )
 
-    cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_SHOW    "Targets displaying..." )
+    cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_SHOW    "Targets displaying various info" )
 
     cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_USER    "User targets" )
-    cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_USER    "Generated only if re" )
+    cmake_language( CALL ${this}.data LIST:NO_SORT HELP_HEAD_USER    "Generated only when using customization features" )
 
     cmake_language( CALL ${this}.data LIST:NO_SORT HELP_DEFAULT OTHER )
     cmake_language( CALL ${this}.data LIST:NO_SORT HELP_ORDER RUN )
