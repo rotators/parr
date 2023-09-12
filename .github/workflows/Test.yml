@@ -25,22 +25,23 @@ jobs:
   - name: Build configuration
     run:  cmake -B ${{ env.GHA_BUILD_DIR }}
 
-  - name: Show CTestRunner help
+  - name: Show tests runner summary
     run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.help
 
   - name: Generate tests matrix
     id:   matrix
-    run:  |
-          echo "matrix=$(cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | grep "job-target" | sed -e 's!^  !!')" >> "$GITHUB_OUTPUT"
-          cat "$GITHUB_OUTPUT"
+    run:  echo "matrix=$(cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | grep "job-target" | sed -e 's!^  !!')" >> "$GITHUB_OUTPUT"
 
  Run:
   needs:   Config
-  name:    ${{ matrix.cfg.job-name }}
-  runs-on: ubuntu-latest
+  name:    ${{ matrix.os.name }} / ${{ matrix.cfg.job-name }}
+  runs-on: ${{ matrix.os.type }}
   strategy:
    fail-fast: false
    matrix:
+    os:
+    - { name: Linux,   type: ubuntu-latest,  artifact: prs-linux }
+    - { name: Windows, type: windows-latest, artifact: prs-windows }
     cfg: ${{ fromJSON(needs.Config.outputs.matrix) }}
 
   steps:
@@ -51,16 +52,13 @@ jobs:
   - name: Download artifact
     uses: actions/download-artifact@v3
     with:
-     name: prs-linux
+     name: ${{ matrix.os.artifact }}
      path: ${{ env.GHA_BUILD_DIR }}
 
   # upload-artifact/download-artifact breaks file permissions
   - name: Restore artifact permissions
     if:   runner.os != 'Windows'
-    run:  chmod +x ${{ env.GHA_BUILD_DIR }}/prs-*
-
-  - name: Check artifact
-    run:  ${{ env.GHA_BUILD_DIR }}/prs-ssl --help
+    run:  chmod --verbose +x ${{ env.GHA_BUILD_DIR }}/*
 
   - name: Build configuration
     run:  cmake -B ${{ env.GHA_BUILD_DIR }} -DCTestRunner.Config="SkipDependencies"
