@@ -483,7 +483,7 @@ function( ${CTestRunner.FunctionName}.postconfig )
             endforeach()
 
             string( REPLACE ";" ", " json "${json}" )
-            string( REPLACE "'" "\\\"" json "${json}" )
+            string( REPLACE "'" "\"" json "${json}" )
             if( "${suffix}" STREQUAL "skip-executables" )
                 unset( dot_suffix )
             else()

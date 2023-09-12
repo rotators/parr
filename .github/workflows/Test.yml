@@ -31,7 +31,7 @@ jobs:
   - name: Generate tests matrix
     id:   matrix
     run:  |
-          echo "matrix=$(cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | egrep "^[ ]+\[" | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | grep "job-target" | sed -e 's!^  !!')" >> "$GITHUB_OUTPUT"
           cat "$GITHUB_OUTPUT"
 
  Run:
