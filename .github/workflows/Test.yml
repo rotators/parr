@@ -2,38 +2,66 @@ name: Test
 
 on: workflow_call
 
+env:
+ GHA_BUILD_DIR: "Build"
+ GHA_BUILD_CFG: "Release"
+ GHA_FUNC_NAME: "prs_test"
+
 jobs:
 
  Config:
   runs-on: 'ubuntu-latest'
+  outputs:
+   matrix: ${{ steps.matrix.outputs.matrix }}
 
   steps:
 
   # NOTES
-  # - current tests runner: ctest (handled by CMake/AddTestTarget.cmake)
+  # - current tests runner: ctest (handled by CMake/CTestRunner.cmake)
 
   - name: Clone repository
     uses: actions/checkout@v3
 
   - name: Build configuration
-    run:  cmake -B Build
+    run:  cmake -B ${{ env.GHA_BUILD_DIR }}
+
+  - name: Show CTestRunner help
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.help
+
+  - name: Generate tests matrix
+    id:   matrix
+    run:  echo matrix="$(cmake --build ${{ env.GHA_BUILD_DIR }}) --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | grep "^[ ]+\[")" >> "$GITHUB_OUTPUT"
+
+ Run:
+  needs:   Config
+  name:    ${{ matrix.cfg.job-name }}
+  runs-on: ubuntu-latest
+  strategy:
+   fail-fast: false
+   matrix:
+    cfg: ${{ fromJSON(needs.Config.outputs.matrix) }}
+
+  steps:
+
+  - name: Clone repository
+    uses: actions/checkout@v3
 
   - name: Download artifact
     uses: actions/download-artifact@v3
     with:
      name: prs-linux
-     path: Build
+     path: ${{ env.GHA_BUILD_DIR }}
 
   # upload-artifact/download-artifact breaks file permissions
   - name: Restore artifact permissions
     if:   runner.os != 'Windows'
-    run:  chmod +x Build/prs-*
+    run:  chmod +x ${{ env.GHA_BUILD_DIR }}/prs-*
 
   - name: Check artifact
-    run:  Build/prs-ssl --help
+    run:  ${{ env.GHA_BUILD_DIR }}/prs-ssl --help
 
-  - name: Check tests runner (show.labels)
-    run:  cmake --build Build --config Release --target add_test_target.show.labels
+  - name: Build configuration
+    run:  cmake -B ${{ env.GHA_BUILD_DIR }} -DCTestRunner.Config="SkipDependencies"
 
-  - name: Check tests runner (only.extension.t)
-    run:  cmake --build Build --config Release --target add_test_target.only.extension.t
+  - name: Run test (${{ matrix.cfg.job-target }})
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --config ${{ env.GHA_BUILD_CFG }} --target ${{ matrix.cfg.job-target }}

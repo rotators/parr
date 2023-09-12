@@ -9,7 +9,7 @@ endfunction()
 # antlr
 #
 
-message(STATUS "Configuring antlr...")
+message( STATUS "Configuring antlr library..." )
 set(ANTLR_BUILD_CPP_TESTS OFF)
 set(ANTLR_BUILD_SHARED    OFF)
 add_subdirectory(antlr/runtime/Cpp EXCLUDE_FROM_ALL)
@@ -19,15 +19,6 @@ target_include_directories(${PROJECT_NAME}+antlr SYSTEM INTERFACE ${CMAKE_CURREN
 target_link_libraries(${PROJECT_NAME}+antlr INTERFACE antlr4_static)
 
 #
-# pegtl
-#
-
-#message(STATUS "Configuring PEGTL library...")
-#set(PEGTL_USE_FILESYSTEM FALSE)
-#add_subdirectory(pegtl EXCLUDE_FROM_ALL)
-#parr_silence_includes(pegtl)
-
-#
 # cxxopts
 #
 
@@ -35,6 +26,19 @@ message(STATUS "Configuring cxxopts library...")
 set(CXXOPTS_ENABLE_WARNINGS TRUE)
 add_subdirectory(cxxopts EXCLUDE_FROM_ALL)
 
-file(REMOVE cmake_install.cmake)
+set( PRS_CLEANUP_INFO TRUE )
+foreach( file IN ITEMS cmake_install.cmake CPackConfig.cmake CPackSourceConfig.cmake )
+    if( NOT EXISTS "${PROJECT_BINARY_DIR}/${file}" )
+        continue()
+    endif()
 
-message(STATUS "Configuring libraries complete")
+    if( PRS_CLEANUP_INFO )
+        unset( PRS_CLEANUP_INFO )
+        message( STATUS "Cleaning libraries byproducts..." )
+    endif()
+
+    file( REMOVE "${PROJECT_BINARY_DIR}/${file}" )
+
+endforeach()
+
+message( STATUS "Configuring libraries complete" )
