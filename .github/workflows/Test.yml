@@ -55,10 +55,17 @@ jobs:
      name: ${{ matrix.os.artifact }}
      path: ${{ env.GHA_BUILD_DIR }}
 
-  # upload-artifact/download-artifact breaks file permissions
-  - name: Restore artifact permissions
-    if:   runner.os != 'Windows'
-    run:  chmod --verbose +x ${{ env.GHA_BUILD_DIR }}/*
+  - name: Prepare artifact
+    run:  |
+          :
+          if [[ "$RUNNER_OS" == 'Windows' ]]; then
+             # move executables to output directory
+             mkdir -p "${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}"
+             mv --verbose "${{ env.GHA_BUILD_DIR }}/*.exe" "${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}"
+          else
+             # upload-artifact/download-artifact breaks file permissions
+             chmod --verbose +x "${{ env.GHA_BUILD_DIR }}/*"
+          fi
 
   - name: Build configuration
     run:  cmake -B ${{ env.GHA_BUILD_DIR }} -D "CTestRunner.Config=SkipDependencies"
