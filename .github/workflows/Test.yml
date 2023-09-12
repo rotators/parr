@@ -2,6 +2,10 @@ name: Test
 
 on: workflow_call
 
+defaults:
+ run:
+  shell: bash
+
 env:
  GHA_BUILD_DIR: "Build"
  GHA_BUILD_CFG: "Release"
@@ -60,11 +64,11 @@ jobs:
           :
           if [[ "$RUNNER_OS" == 'Windows' ]]; then
              # move executables to output directory
-             mkdir -p "${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}"
-             mv --verbose "${{ env.GHA_BUILD_DIR }}/*.exe" "${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}"
+             mkdir -p ${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}
+             mv --verbose ${{ env.GHA_BUILD_DIR }}/*.exe ${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}
           else
              # upload-artifact/download-artifact breaks file permissions
-             chmod --verbose +x "${{ env.GHA_BUILD_DIR }}/*"
+             chmod --verbose +x ${{ env.GHA_BUILD_DIR }}/*
           fi
 
   - name: Build configuration
