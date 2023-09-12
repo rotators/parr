@@ -61,7 +61,7 @@ jobs:
     run:  chmod --verbose +x ${{ env.GHA_BUILD_DIR }}/*
 
   - name: Build configuration
-    run:  cmake -B ${{ env.GHA_BUILD_DIR }} -DCTestRunner.Config="SkipDependencies"
+    run:  cmake -DCTestRunner.Config="SkipDependencies" -B ${{ env.GHA_BUILD_DIR }}
 
   - name: Run test (${{ matrix.cfg.job-target }})
     run:  cmake --build ${{ env.GHA_BUILD_DIR }} --config ${{ env.GHA_BUILD_CFG }} --target ${{ matrix.cfg.job-target }}
