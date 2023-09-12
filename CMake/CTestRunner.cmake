@@ -75,7 +75,7 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
 
     # check if target is valid
     if( NOT TARGET ${target} )
-        message( AUTHOR_WARNING "Target does not exist, ignored\n$target = \"{target}\"" )
+        message( AUTHOR_WARNING "Target does not exist, ignored\n$target = \"${target}\"" )
         return()
     endif()
 
