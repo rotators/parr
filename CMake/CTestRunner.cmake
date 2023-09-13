@@ -502,8 +502,8 @@ function( ${CTestRunner.FunctionName}.postconfig )
             list( APPEND output_matrix "  matrix-${suffix}=[${json}]" )
 
             cmake_language( CALL ${this}.target gha.outputs.matrix
-                COMMAND_FILE "${CMAKE_COMMAND}" -E echo  "  matrix-${suffix}=[${json}]"
-                HELP_TEXT "Generate matrix list as"
+                COMMAND_FILE "${CMAKE_COMMAND}" -E echo  "Github Actions matrix list"
+                HELP_TEXT "Generate different matrix flavors from generated targets"
                 HELP_LIST "GHA"
                 ADD_ONCE
             )
