@@ -40,8 +40,8 @@ jobs:
     id:   CTestRunnerMatrix
     run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.CTR_FUNC_NAME }}.gha.outputs.matrix | grep "^  " | sed -e 's!^  !!' >> "$GITHUB_OUTPUT"
 
- # run simple tests
- CTestRunner:
+ # run tests in 'simple' mode (no executables, no groups)
+ CTestRunnerSimple:
   needs:   Configure
   name:    ${{ matrix.os.name }} / ${{ matrix.test.job-name }}
   runs-on: ${{ matrix.os.type }}
@@ -86,3 +86,12 @@ jobs:
   - name: Show tests log
     if:   always()
     run:  cmake -E cat ${{ env.GHA_BUILD_DIR }}/Test/Testing/Temporary/LastTest.log || true
+
+ CTestRunnerTest:
+  needs:   Configure
+  if:      needs.Configure.outputs.CTestRunnerMatrixGroups
+  runs-on: ubuntu-latest
+
+  steps:
+
+  - run: echo "<${{ needs.Configure.outputs.CTestRunnerMatrixGroups}}>"
