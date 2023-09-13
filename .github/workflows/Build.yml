@@ -35,6 +35,10 @@ defaults:
  run:
   shell: bash
 
+env:
+ GHA_BUILD_DIR: "Build"
+ GHA_BUILD_CFG: "Release"
+
 jobs:
 
  Build:
@@ -62,16 +66,16 @@ jobs:
      distribution: 'microsoft'
 
   - name: Build configuration
-    run:  cmake -B Build
+    run:  cmake -B ${{ env.GHA_BUILD_DIR }}
     env:
      CC:            ${{ matrix.cfg.cc }}
      CXX:           ${{ matrix.cfg.cxx }}
      ARTIFACTS_DIR: ${{ matrix.cfg.artifacts-dir }}
 
   - name: Build
-    run:  cmake --build Build --config Release
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --config ${{ env.GHA_BUILD_CFG }}
 
-  - name: Artifacts
+  - name: Upload artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}
     uses: actions/upload-artifact@v3
     with:

@@ -99,7 +99,7 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
         return()
     endif()
 
-    cmake_parse_arguments( PARSE_ARGV 3 arg "" "GROUP" "ADD_GLOB" )
+    cmake_parse_arguments( PARSE_ARGV 3 arg "" "" "ADD_GLOB" )
 
     # test configuration files extensions
     set( test_config_edit COMMAND_LINE COMMAND_LINE_BEFORE COMMAND_LINE_AFTER GROUP )
@@ -161,10 +161,13 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
         unset( test_used_files )
         list( APPEND test_used_files "${test_path_ext}" )
 
+        # test config : comand line
+        # must be checked first, as it cannot be modified after test is created
         set( test_command_line "${command_line}" )
         unset( test_command_line_before )
         unset( test_command_line_after )
         unset( test_used_files.command-line )
+        # TODO? arg_IGNORE_CONFIG COMMAND_LINE*
         if( EXISTS "${test_path_noext}.COMMAND_LINE" )
             file( READ "${test_path_noext}.COMMAND_LINE" test_command_line )
 
@@ -208,14 +211,14 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
         # all created tests have multiple labels set during processing, in two available formats
         #  <ctest_runner_function_name>::<target_name>  primary label
         #  <ctest_runner_function_name>:<name>          secondary label
-        # primary labels are set for *all* project targets processed by this function
+        # primary labels are set for *all* executable targets processed by this function
         #                set for all generated tests
         # secondary label allows
         #                set only if current test is enabled
         add_test( NAME "${test_name}" COMMAND  "$<TARGET_FILE:${target}>" ${test_command_line_full} )
         cmake_language( CALL ${this}.label "${test_name}" ":${target}" )
 
-        # cmake properties : DISABLED WILL_FAIL
+        # test config : cmake properties : DISABLED WILL_FAIL
         foreach( property IN LISTS test_config_copy )
             if( EXISTS "${test_path_noext}.${property}" )
                 cmake_language( CALL ${this}.debug "TEST" "- property          ${property} = TRUE" )
@@ -233,18 +236,22 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
             continue()
         endif()
 
-        # cmake properties : LABELS
+        # test config : cmake properties : LABELS
+        # user-defined labels, known as groups, are more strict than what cmake itself allows
+        # only one group can be set per test, and they have to follow naming scheme used by other labels
         unset( test_group_name )
         unset( test_group_file )
         foreach( file IN ITEMS "${test_path_dir}/.GROUP" "${test_path_noext}.GROUP" )
-            if( EXISTS "${file}" )
-                file( READ "${file}" test_group )
-                if( test_group MATCHES "^[a-z0-9\\-]+$" )
-                    set( test_group_name "${test_group}" )
-                    set( test_group_file "${file}" )
-                else()
-                    message( AUTHOR_WARNING "Invalid group name, ignored\nGROUP = \"${test_group}\"\nfile = ${file}" )
-                endif()
+            if( NOT EXISTS "${file}" )
+                continue()
+            endif()
+
+            file( READ "${file}" tmp )
+            if( tmp MATCHES "^[a-z0-9\\-]+$" )
+                set( test_group_name "${tmp}" )
+                set( test_group_file "${file}" )
+            else()
+                message( AUTHOR_WARNING "Invalid test group name, ignored\ngroup = \"${tmp}\"\nfile = ${file}" )
             endif()
         endforeach()
 
@@ -333,17 +340,17 @@ function( ${CTestRunner.FunctionName} target command_line extension ... )
     # default runner, includes all tests found
     cmake_language( CALL ${this}.target run.all
         CTEST --label-regex ^${this}::
-        HELP_TEXT "Run all tests found by ${this}() function"
+        HELP_TEXT "Run all tests found by ${this}()"
         HELP_LIST "RUN"
         ADD_ONCE
         ADD_DEPENDENCY ${target}
         ADD_SOURCES    ${target_used_files}
     )
 
-    # project target, runs all tests added in current function call
+    # executable target
     cmake_language( CALL ${this}.target run.${target}
         CTEST --label-regex ^${this}::${target}$
-        HELP_TEXT "Run all tests attached to executable target '${target}'"
+        HELP_TEXT "Run all tests which uses '${target}' executable"
         HELP_LIST "RUN"
         ADD_ONCE
         ADD_DEPENDENCY ${target}
@@ -394,7 +401,7 @@ function( ${CTestRunner.FunctionName}.postconfig )
         return()
     endif()
 
-    message( STATUS "Configuring tests runner" )
+    message( STATUS "Configuring CTestRunner" )
 
     # prepare overengineered help target
     cmake_language( CALL ${this}.target help
@@ -455,44 +462,54 @@ function( ${CTestRunner.FunctionName}.postconfig )
     endif()
 
     # gha matrix
-    cmake_language( CALL ${this}.data GET TARGETS data.full )
-    if( data.full )
-        list( APPEND help.full "Generate matrix using all targets" )
-        list( FILTER data.full INCLUDE REGEX "\\.(run|only)\\." )
-        list( FILTER data.full EXCLUDE REGEX "\\.run\\.all$" )
+    cmake_language( CALL ${this}.data GET TARGETS data )
+    if( data )
+        list( APPEND help.all "Generate matrix using all targets" )
+        list( APPEND data.all ${data} )
+        list( FILTER data.all INCLUDE REGEX "\\.(run|only)\\." )
+        list( FILTER data.all EXCLUDE REGEX "\\.run\\.all$" )
 
-        list( APPEND help.skip-executables "Generate matrix using only non-executable targets" )
-        list( APPEND data.skip-executables ${data.full} )
-        list( FILTER data.skip-executables INCLUDE REGEX "\\.only\\." )
+        list( APPEND help.simple "Generate matrix using only non-executable/non-group targets" )
+        list( APPEND data.simple ${data.all} )
+        list( FILTER data.simple INCLUDE REGEX "\\.only\\." )
+        list( FILTER data.groups EXCLUDE REGEX "\\.only\\.group\\." )
 
         list( APPEND help.executables "Generate matrix using only executable targets" )
-        list( APPEND data.executables ${data.full} )
+        list( APPEND data.executables ${data.all} )
         list( FILTER data.executables INCLUDE REGEX "\\.run\\." )
 
-        foreach( suffix IN ITEMS skip-executables executables full )
+        list( APPEND help.groups "Generate matrix using only group targets" )
+        list( APPEND data.groups ${data.all} )
+        list( FILTER data.groups INCLUDE REGEX "\\.only\\.group\\." )
+
+        foreach( suffix IN ITEMS all executables groups simple )
             unset( json )
+            if( NOT data.${suffix} )
+                continue()
+            endif()
             foreach( target IN LISTS data.${suffix} )
                 string( SUBSTRING "${target}" ${this_length} -1 job_name )
-                if( "${suffix}" STREQUAL "executables" )
-                    string( REGEX REPLACE "^run\\." "" job_name "${job_name}" )
-                else()
-                    string( REGEX REPLACE "^run\\." "executable." job_name "${job_name}" )
-                endif()
+
+                string( REGEX REPLACE "^run\\." "executable." job_name "${job_name}" )
+                string( REGEX REPLACE ".+\\.(.+)$" "\\1" job_name_short "${job_name}" )
+
                 string( REPLACE "." " / " job_name "${job_name}" )
-                list( APPEND json "{ 'job-name': '${job_name}', 'job-target': '${target}' }" )
+                list( APPEND json "{ 'job-name': '${job_name}', 'job-name-short': '${job_name_short}', 'job-target': '${target}' }" )
             endforeach()
 
             string( REPLACE ";" ", " json "${json}" )
             string( REPLACE "'" "\"" json "${json}" )
-            if( "${suffix}" STREQUAL "skip-executables" )
-                unset( dot_suffix )
-            else()
-                set( dot_suffix ".${suffix}")
-            endif()
-            cmake_language( CALL ${this}.target gha.matrix${dot_suffix}
-                CMAKE -E echo "  [${json}]"
-                HELP_TEXT "${help.${suffix}}"
+            list( APPEND output_matrix "  matrix-${suffix}=[${json}]" )
+
+            cmake_language( CALL ${this}.target gha.outputs.matrix
+                COMMAND_FILE "${CMAKE_COMMAND}" -E echo  "  matrix-${suffix}=[${json}]"
+                HELP_TEXT "Generate matrix list as"
                 HELP_LIST "GHA"
+                ADD_ONCE
+            )
+
+            cmake_language( CALL ${this}.target gha.outputs.matrix
+                COMMAND_FILE "${CMAKE_COMMAND}" -E echo  "  matrix-${suffix}=[${json}]"
             )
         endforeach()
     endif()
@@ -564,7 +581,7 @@ function( ${CTestRunner.FunctionName}.postconfig )
         endif()
     endforeach( target )
 
-    # target must be created after all last data modification 
+    # 'show.data' target must be created after last data modification
     cmake_language( CALL ${this}.data GET DATA_NAMES data_names )
     if( data_names )
         list( APPEND data_names "DATA_NAMES" )

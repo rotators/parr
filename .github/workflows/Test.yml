@@ -9,14 +9,18 @@ defaults:
 env:
  GHA_BUILD_DIR: "Build"
  GHA_BUILD_CFG: "Release"
- GHA_FUNC_NAME: "prs_test"
+ CTR_FUNC_NAME: "prs_test"
+ CTR_CONFIG:    "SkipDependencies"
 
 jobs:
 
- Config:
-  runs-on: 'ubuntu-latest'
+ Configure:
+  runs-on: ubuntu-latest
   outputs:
-   matrix: ${{ steps.matrix.outputs.matrix }}
+   CTestRunnerMatrixAll:         ${{ steps.CTestRunnerMatrix.outputs.matrix-all }}
+   CTestRunnerMatrixExecutables: ${{ steps.CTestRunnerMatrix.outputs.matrix-executables }}
+   CTestRunnerMatrixGroups:      ${{ steps.CTestRunnerMatrix.outputs.matrix-groups }}
+   CTestRunnerMatrixSimple:      ${{ steps.CTestRunnerMatrix.outputs.matrix-simple }}
 
   steps:
 
@@ -30,49 +34,55 @@ jobs:
     run:  cmake -B ${{ env.GHA_BUILD_DIR }}
 
   - name: Show tests runner summary
-    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.help
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.CTR_FUNC_NAME }}.help
 
   - name: Generate tests matrix
-    id:   matrix
-    run:  echo "matrix=$(cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.GHA_FUNC_NAME }}.gha.matrix | grep "job-target" | sed -e 's!^  !!')" >> "$GITHUB_OUTPUT"
+    id:   CTestRunnerMatrix
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --target ${{ env.CTR_FUNC_NAME }}.gha.outputs.matrix | grep "^  " | sed -e 's!^  !!' >> "$GITHUB_OUTPUT"
 
- Run:
-  needs:   Config
-  name:    ${{ matrix.os.name }} / ${{ matrix.cfg.job-name }}
+ # run simple tests
+ CTestRunner:
+  needs:   Configure
+  name:    ${{ matrix.os.name }} / ${{ matrix.test.job-name }}
   runs-on: ${{ matrix.os.type }}
   strategy:
    fail-fast: false
    matrix:
-    os:
+    os: # needs to be set before generated matrix, to keep jobs list sorted in GitHub UI
     - { name: Linux,   type: ubuntu-latest,  artifact: prs-linux }
     - { name: Windows, type: windows-latest, artifact: prs-windows }
-    cfg: ${{ fromJSON(needs.Config.outputs.matrix) }}
+    test: ${{ fromJSON(needs.Configure.outputs.CTestRunnerMatrixSimple) }}
 
   steps:
 
   - name: Clone repository
     uses: actions/checkout@v3
 
-  - name: Download artifact
+  - name: Download artifacts
     uses: actions/download-artifact@v3
     with:
      name: ${{ matrix.os.artifact }}
      path: ${{ env.GHA_BUILD_DIR }}
 
-  - name: Prepare artifact
+  - name: Prepare artifacts
     run:  |
           :
           if [[ "$RUNNER_OS" == 'Windows' ]]; then
-             # move executables to output directory
+             # move executables to VS output directory
              mkdir -p ${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}
              mv --verbose ${{ env.GHA_BUILD_DIR }}/*.exe ${{ env.GHA_BUILD_DIR }}/${{ env.GHA_BUILD_CFG }}
           else
-             # upload-artifact/download-artifact breaks file permissions
+             # https://github.com/actions/upload-artifact/blob/main/README.md#permission-loss
+             # https://github.com/actions/download-artifact/blob/main/README.md#permission-loss
              chmod --verbose +x ${{ env.GHA_BUILD_DIR }}/*
           fi
 
   - name: Build configuration
-    run:  cmake -B ${{ env.GHA_BUILD_DIR }} -D "CTestRunner.Config=SkipDependencies"
+    run:  cmake -B ${{ env.GHA_BUILD_DIR }} -D "CTestRunner.Config=${{ env.CTR_CONFIG }}"
 
-  - name: Run test (${{ matrix.cfg.job-target }})
-    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --config ${{ env.GHA_BUILD_CFG }} --target ${{ matrix.cfg.job-target }}
+  - name: Run tests (using target ${{ matrix.test.job-target }})
+    run:  cmake --build ${{ env.GHA_BUILD_DIR }} --config ${{ env.GHA_BUILD_CFG }} --target ${{ matrix.test.job-target }}
+
+  - name: Show tests log
+    if:   always()
+    run:  cmake -E cat ${{ env.GHA_BUILD_DIR }}/Test/Testing/Temporary/LastTest.log || true
