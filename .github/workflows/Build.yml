@@ -77,7 +77,7 @@ jobs:
 
   - name: Upload artifacts
     if:   ${{ matrix.cfg.artifacts-dir }}
-    uses: actions/upload-artifact@v3
+    uses: actions/upload-artifact@v4
     with:
      name:              ${{ matrix.cfg.artifacts-dir }}
      path:              ${{ matrix.cfg.artifacts-dir }}/
